@@ -6,6 +6,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ForkJoinPool;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 // -Xmx10g -Xms10g
 public class Solution {
@@ -60,9 +61,13 @@ public class Solution {
 
         // Create 5 CompletableFuture, by 4 tasks on each
         CompletableFuture[] completableFutures = new CompletableFuture[5];
+        // convert tasks into supplier objects
+        List<Supplier<Double>> supplierTasks = tasks.stream()
+            .map(this::taskToSupplier)
+            .collect(Collectors.toList());
         int j = 0;
         for (int i = 0; i < 20; i += 4) {
-            completableFutures[j] = createCompletableFutureForFiveTasks(pool, tasks, tasksResults, i);
+            completableFutures[j] = createCompletableFutureForFiveTasks(pool, supplierTasks, tasksResults, i);
             j++;
         }
 
@@ -84,20 +89,20 @@ public class Solution {
      * @return - CompletableFuture for 4 tasks starting from index in list of tasks
      */
     private CompletableFuture<Double> createCompletableFutureForFiveTasks(
-        final ForkJoinPool pool, final List<Callable<Double>> tasks, final double[] tasksResults, int fromIndex) {
+        final ForkJoinPool pool, final List<Supplier<Double>> tasks, final double[] tasksResults, int fromIndex) {
 
-        return CompletableFuture.supplyAsync(taskToSupplier(tasks.get(fromIndex)), pool)
+        return CompletableFuture.supplyAsync(tasks.get(fromIndex), pool)
             .thenComposeAsync(res -> {
                 tasksResults[fromIndex] = res;
-                return CompletableFuture.supplyAsync(taskToSupplier(tasks.get(fromIndex + 1)), pool);
+                return CompletableFuture.supplyAsync(tasks.get(fromIndex + 1), pool);
             })
             .thenComposeAsync(res -> {
                 tasksResults[fromIndex + 1] = res;
-                return CompletableFuture.supplyAsync(taskToSupplier(tasks.get(fromIndex + 2)), pool);
+                return CompletableFuture.supplyAsync(tasks.get(fromIndex + 2), pool);
             })
             .thenComposeAsync(res -> {
                 tasksResults[fromIndex + 2] = res;
-                return CompletableFuture.supplyAsync(taskToSupplier(tasks.get(fromIndex + 3)), pool);
+                return CompletableFuture.supplyAsync(tasks.get(fromIndex + 3), pool);
             })
             .thenApplyAsync(res -> {
                 tasksResults[fromIndex + 3] = res;
