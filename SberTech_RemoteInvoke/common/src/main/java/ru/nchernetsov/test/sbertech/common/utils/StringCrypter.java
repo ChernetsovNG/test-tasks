@@ -1,4 +1,4 @@
-package ru.nchernetsov.test.sbertech.common.message;
+package ru.nchernetsov.test.sbertech.common.utils;
 
 import org.apache.commons.codec.binary.Base64;
 import org.slf4j.Logger;
@@ -19,7 +19,7 @@ public class StringCrypter {
     public static StringCrypter stringCrypter;
 
     static {
-        // создаем экземпляр класса StringCrypter с ключем шифрования
+        // создаем экземпляр класса StringCrypter с ключом шифрования
         stringCrypter = new StringCrypter(new byte[]{1, 4, 5, 6, 8, 9, 7, 8});
     }
 
@@ -50,7 +50,7 @@ public class StringCrypter {
     public static class DESSecretKey implements SecretKey {
         private final byte[] key;
 
-        public DESSecretKey(byte[] key) {
+        DESSecretKey(byte[] key) {
             this.key = key;
         }
 
@@ -94,4 +94,5 @@ public class StringCrypter {
         }
         return null;
     }
+
 }

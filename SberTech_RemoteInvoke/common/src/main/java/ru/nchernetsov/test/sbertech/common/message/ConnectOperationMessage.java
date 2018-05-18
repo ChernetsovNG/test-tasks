@@ -4,6 +4,9 @@ import lombok.Getter;
 import lombok.ToString;
 import ru.nchernetsov.test.sbertech.common.enums.ConnectOperation;
 
+/**
+ * Запрос на установление соединения с сервером
+ */
 @Getter
 @ToString
 public class ConnectOperationMessage extends Message {

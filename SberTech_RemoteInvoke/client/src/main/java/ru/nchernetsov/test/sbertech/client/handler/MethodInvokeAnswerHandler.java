@@ -1,10 +1,10 @@
 package ru.nchernetsov.test.sbertech.client.handler;
 
-import ru.nchernetsov.test.sbertech.common.message.AnswerMessage;
-import ru.nchernetsov.test.sbertech.common.message.DemandMessage;
+import ru.nchernetsov.test.sbertech.common.message.MethodInvokeAnswerMessage;
+import ru.nchernetsov.test.sbertech.common.message.MethodInvokeDemandMessage;
 
 public interface MethodInvokeAnswerHandler {
-    void handleMessage(AnswerMessage message);
+    void handleMessage(MethodInvokeAnswerMessage message);
 
-    void addDemandMessage(DemandMessage message);
+    void addDemandMessage(MethodInvokeDemandMessage message);
 }

@@ -11,19 +11,28 @@ import java.net.Socket;
 import java.util.List;
 import java.util.concurrent.*;
 
+/**
+ * Сокетный канал для передачи сообщений
+ */
 public class SocketClientChannel implements MessageChannel {
     private static final Logger LOG = LoggerFactory.getLogger(SocketClientChannel.class);
     private static final int WORKERS_COUNT = 2;
 
+    /**
+     * Очередь для исходящий (отправляемых в сокет) сообщений
+     */
     private final BlockingQueue<Message> outputMessages = new LinkedBlockingQueue<>();
+    /**
+     * Очередь для входящих (прочитанных из сокета) сообщений
+     */
     private final BlockingQueue<Message> inputMessages = new LinkedBlockingQueue<>();
 
     private final ExecutorService executor;
-    private final Socket client;
+    private final Socket clientSocket;
     private final List<Runnable> shutdownRegistrations;
 
-    public SocketClientChannel(Socket client) {
-        this.client = client;
+    public SocketClientChannel(Socket clientSocket) {
+        this.clientSocket = clientSocket;
         this.executor = Executors.newFixedThreadPool(WORKERS_COUNT);
         this.shutdownRegistrations = new CopyOnWriteArrayList<>();
     }
@@ -35,8 +44,8 @@ public class SocketClientChannel implements MessageChannel {
 
     // прочитать сообщение из очереди и отправить его в сокетный канал
     private void sendMessage() {
-        try (ObjectOutputStream out = new ObjectOutputStream(client.getOutputStream())) {
-            while (client.isConnected()) {
+        try (ObjectOutputStream out = new ObjectOutputStream(clientSocket.getOutputStream())) {
+            while (clientSocket.isConnected()) {
                 Message message = outputMessages.take();  // blocks here
                 out.writeObject(message);
             }
@@ -47,7 +56,7 @@ public class SocketClientChannel implements MessageChannel {
 
     // получить сообщение из сокетного канала и записать его в очередь
     private void receiveMessage() {
-        try (ObjectInputStream in = new ObjectInputStream(client.getInputStream())) {
+        try (ObjectInputStream in = new ObjectInputStream(clientSocket.getInputStream())) {
             Object readObject;
             while ((readObject = in.readObject()) != null) {  // blocks here
                 Message message = (Message) readObject;
@@ -82,4 +91,5 @@ public class SocketClientChannel implements MessageChannel {
         shutdownRegistrations.clear();
         executor.shutdownNow();
     }
+
 }

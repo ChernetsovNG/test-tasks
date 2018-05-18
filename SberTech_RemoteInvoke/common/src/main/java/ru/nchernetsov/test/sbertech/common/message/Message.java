@@ -8,7 +8,9 @@ import org.slf4j.LoggerFactory;
 import java.io.Serializable;
 import java.util.UUID;
 
-// Сообщение - содержит адресацию (откуда -> куда)
+/**
+ * Сообщение - содержит уникальный идентификатор и адресацию (откуда -> куда)
+ */
 @Getter
 @ToString
 public abstract class Message implements Serializable {

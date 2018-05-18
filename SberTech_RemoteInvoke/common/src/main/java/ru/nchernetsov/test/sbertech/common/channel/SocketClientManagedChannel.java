@@ -11,7 +11,7 @@ public class SocketClientManagedChannel extends SocketClientChannel {
         this(new Socket(host, port));
     }
 
-    private SocketClientManagedChannel(Socket socket) throws IOException {
+    private SocketClientManagedChannel(Socket socket) {
         super(socket);
         this.socket = socket;
     }
@@ -20,4 +20,5 @@ public class SocketClientManagedChannel extends SocketClientChannel {
         super.close();
         socket.close();
     }
+
 }

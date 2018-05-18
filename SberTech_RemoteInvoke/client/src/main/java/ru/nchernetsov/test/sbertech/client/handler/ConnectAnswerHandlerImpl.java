@@ -3,7 +3,7 @@ package ru.nchernetsov.test.sbertech.client.handler;
 import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import ru.nchernetsov.test.sbertech.client.controller.ConnectController;
+import ru.nchernetsov.test.sbertech.client.Client;
 import ru.nchernetsov.test.sbertech.common.enums.ConnectStatus;
 import ru.nchernetsov.test.sbertech.common.message.ConnectAnswerMessage;
 
@@ -15,10 +15,10 @@ public class ConnectAnswerHandlerImpl implements ConnectAnswerHandler {
     @Setter
     private UUID handshakeMessageUuid;
 
-    private final ConnectController connectController;
+    private final Client client;
 
-    public ConnectAnswerHandlerImpl(ConnectController connectController) {
-        this.connectController = connectController;
+    public ConnectAnswerHandlerImpl(Client client) {
+        this.client = client;
     }
 
     @Override
@@ -27,10 +27,12 @@ public class ConnectAnswerHandlerImpl implements ConnectAnswerHandler {
         if (toMessageUuid.equals(handshakeMessageUuid)) {
             if (message.getConnectStatus().equals(ConnectStatus.HANDSHAKE_OK)) {
                 LOG.info("Получен ответ об установлении связи от сервера");
-                connectController.unlockHandleMessage();
+                if (client != null) {
+                    client.unlockMessageHandle();
+                }
             } else {
                 LOG.info("Получен ответ, но не HANDSHAKE_OK. Message: {}", message);
-            };
+            }
         } else {
             LOG.info("Пришёл ответ от сервера с UUID не в ответ на наше сообщение! Message: {}", message);
         }

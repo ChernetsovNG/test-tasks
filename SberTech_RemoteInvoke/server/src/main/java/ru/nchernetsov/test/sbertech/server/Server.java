@@ -7,8 +7,8 @@ import ru.nchernetsov.test.sbertech.common.channel.SocketClientChannel;
 import ru.nchernetsov.test.sbertech.common.message.*;
 import ru.nchernetsov.test.sbertech.server.handler.ConnectDemandHandler;
 import ru.nchernetsov.test.sbertech.server.handler.ConnectDemandHandlerImpl;
-import ru.nchernetsov.test.sbertech.server.handler.DemandHandler;
-import ru.nchernetsov.test.sbertech.server.handler.DemandHandlerImpl;
+import ru.nchernetsov.test.sbertech.server.handler.MethodInvokeDemandHandler;
+import ru.nchernetsov.test.sbertech.server.handler.MethodInvokeDemandHandlerImpl;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -27,17 +27,21 @@ import java.util.concurrent.TimeUnit;
 import static ru.nchernetsov.test.sbertech.common.CommonData.DEFAULT_SERVER_PORT;
 import static ru.nchernetsov.test.sbertech.common.CommonData.SERVER_ADDRESS;
 
+/**
+ * Основной класс сервера
+ */
 public class Server implements Addressee {
     private static final Logger LOG = LoggerFactory.getLogger(Server.class);
+    private static final String SERVICES_DESCRIPTION_FILE = "server.properties";
 
-    private static final int THREADS_COUNT = 1;
+    private static final int THREADS_COUNT = 2;
     private static final int MESSAGE_DELAY_MS = 117;
 
     private final Address address;
 
     private final ExecutorService executor;
 
-    private final DemandHandler demandHandler;
+    private final MethodInvokeDemandHandler methodInvokeDemandHandler;
     private final ConnectDemandHandler connectDemandHandler;
 
     // Карта вида <Имя сервиса - Сервис>
@@ -69,7 +73,7 @@ public class Server implements Addressee {
         initServices();
 
         connectDemandHandler = new ConnectDemandHandlerImpl();
-        demandHandler = new DemandHandlerImpl(connectDemandHandler, services);
+        methodInvokeDemandHandler = new MethodInvokeDemandHandlerImpl(connectDemandHandler, services);
     }
 
     public void start(int serverPort) throws Exception {
@@ -98,13 +102,12 @@ public class Server implements Addressee {
         NoSuchMethodException, InstantiationException, IllegalAccessException {
 
         LOG.info("Init server services");
-        String propertiesFileName = "server.properties";
         Properties properties = new Properties();
-        InputStream inputStream = getClass().getClassLoader().getResourceAsStream(propertiesFileName);
+        InputStream inputStream = getClass().getClassLoader().getResourceAsStream(SERVICES_DESCRIPTION_FILE);
         if (inputStream != null) {
             properties.load(inputStream);
         } else {
-            throw new FileNotFoundException("Property file: " + propertiesFileName + " not found");
+            throw new FileNotFoundException("Property file: " + SERVICES_DESCRIPTION_FILE + " not found");
         }
         Enumeration<?> enumeration = properties.propertyNames();
         while (enumeration.hasMoreElements()) {
@@ -115,14 +118,9 @@ public class Server implements Addressee {
             Object serviceObject = ReflectionHelper.instantiate(serviceClass);
             services.put(serviceName, serviceObject);
         }
-
     }
 
-    public void stop() {
-        executor.shutdownNow();
-    }
-
-    // Обработка сообщений о соединении клиентов
+    // Обработка сообщений от клиентов
     private void clientMessageHandle() {
         try {
             LOG.info("Начат цикл обработки соединений клиентов");
@@ -134,8 +132,8 @@ public class Server implements Addressee {
                     if (message != null) {
                         if (message.isClass(ConnectOperationMessage.class)) {
                             connectDemandHandler.handleConnectDemand(clientAddress, clientChannel, (ConnectOperationMessage) message);
-                        } else if (message.isClass(DemandMessage.class)) {
-                            demandHandler.handleDemandMessage(clientAddress, clientChannel, (DemandMessage) message);
+                        } else if (message.isClass(MethodInvokeDemandMessage.class)) {
+                            methodInvokeDemandHandler.handleDemandMessage(clientAddress, clientChannel, (MethodInvokeDemandMessage) message);
                         } else {
                             LOG.warn("От клиента получено сообщение необрабатываемог класса. Message: {}", message);
                         }
@@ -148,8 +146,13 @@ public class Server implements Addressee {
         }
     }
 
+    public void stop() {
+        executor.shutdownNow();
+    }
+
     @Override
     public Address getAddress() {
         return address;
     }
+
 }
