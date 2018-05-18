@@ -99,6 +99,27 @@ public class Client implements Addressee {
         // Блокируемся до установления соединения с сервером
         handshakeLatch.await();
 
+        testRun1();
+        testRun2();
+
+        // пока у нас есть необработанные запросы, не останавливаем основной Thread клиента
+        while (!remoteCallLatches.isEmpty()) {
+            Thread.sleep(PAUSE_MS);
+        }
+        close();
+    }
+
+    private void testRun1() {
+        // отправляем сообщение об удалённом вызове метода
+        try {
+            Object remoteCallAnswer = remoteCall("DateService", "sleep", new Object[]{5_000L});
+            LOG.info("Method result: {}", remoteCallAnswer);
+        } catch (RemoteCallException e) {
+            LOG.error("RemoteCallException: {}", e.getMessage());
+        }
+    }
+
+    private void testRun2() {
         // отправляем сообщение об удалённом вызове метода
         try {
             Object remoteCallAnswer = remoteCall("MathService", "multiply", new Object[]{3, 9});
@@ -111,12 +132,6 @@ public class Client implements Addressee {
         for (int i = 0; i < 10; i++) {
             new Thread(new Caller(this)).start();
         }
-
-        // пока у нас есть необработанные запросы, не останавливаем основной Thread клиента
-        while (!remoteCallLatches.isEmpty()) {
-            Thread.sleep(PAUSE_MS);
-        }
-        close();
     }
 
     private static class Caller implements Runnable {
