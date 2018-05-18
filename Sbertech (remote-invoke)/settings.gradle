@@ -1,0 +1,5 @@
+rootProject.name = 'remote-invoke-app'
+include 'server'
+include 'client'
+include 'common'
+
