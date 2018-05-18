@@ -45,7 +45,7 @@ public class Server implements Addressee {
     private final ConnectDemandHandler connectDemandHandler;
 
     // Карта вида <Имя сервиса - Сервис>
-    private Map<String, Object> services = new ConcurrentHashMap<>();
+    private final Map<String, Object> services = new ConcurrentHashMap<>();
 
     public static void main(String... args) {
         Integer serverPortNum;
@@ -63,7 +63,7 @@ public class Server implements Addressee {
         }
     }
 
-    public Server() throws IOException, ClassNotFoundException, NoSuchMethodException,
+    private Server() throws IOException, ClassNotFoundException, NoSuchMethodException,
         InstantiationException, IllegalAccessException, InvocationTargetException {
 
         executor = Executors.newFixedThreadPool(THREADS_COUNT);
@@ -76,7 +76,7 @@ public class Server implements Addressee {
         methodInvokeDemandHandler = new MethodInvokeDemandHandlerImpl(connectDemandHandler, services);
     }
 
-    public void start(int serverPort) throws Exception {
+    private void start(int serverPort) throws Exception {
         executor.submit(this::clientsMessagesHandle);
 
         // Ждём подключения клиентов к серверу. Для подключённых клиентов создаём каналы для связи

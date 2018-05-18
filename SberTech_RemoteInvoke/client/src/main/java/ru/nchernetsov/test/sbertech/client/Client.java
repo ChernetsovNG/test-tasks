@@ -40,7 +40,7 @@ public class Client implements Addressee {
     private static final int PAUSE_MS = 223;
     private static final int THREADS_NUMBER = 2;
 
-    private ExecutorService executor = Executors.newFixedThreadPool(THREADS_NUMBER);
+    private final ExecutorService executor = Executors.newFixedThreadPool(THREADS_NUMBER);
 
     // ожидаем установления соединения с сервером, после чего снимаем блокировку обработки сообщений
     private final CountDownLatch handshakeLatch = new CountDownLatch(1);

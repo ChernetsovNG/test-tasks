@@ -16,7 +16,7 @@ import java.security.NoSuchAlgorithmException;
 public class StringCrypter {
     private static final Logger LOG = LoggerFactory.getLogger(StringCrypter.class);
 
-    public static StringCrypter stringCrypter;
+    public static final StringCrypter stringCrypter;
 
     static {
         // создаем экземпляр класса StringCrypter с ключом шифрования
@@ -47,7 +47,7 @@ public class StringCrypter {
         dcipher.init(Cipher.DECRYPT_MODE, key);
     }
 
-    public static class DESSecretKey implements SecretKey {
+    static class DESSecretKey implements SecretKey {
         private final byte[] key;
 
         DESSecretKey(byte[] key) {

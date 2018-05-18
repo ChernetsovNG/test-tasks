@@ -22,7 +22,7 @@ public abstract class Message implements Serializable {
     private final Address to;
     private final String className;
 
-    protected Message(Address from, Address to, Class<?> clazz) {
+    Message(Address from, Address to, Class<?> clazz) {
         this.uuid = UUID.randomUUID();
         this.from = from;
         this.to = to;
