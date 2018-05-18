@@ -17,9 +17,9 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Enumeration;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -41,7 +41,7 @@ public class Server implements Addressee {
     private final ConnectDemandHandler connectDemandHandler;
 
     // Карта вида <Имя сервиса - Сервис>
-    private Map<String, Object> services = new HashMap<>();
+    private Map<String, Object> services = new ConcurrentHashMap<>();
 
     public static void main(String... args) {
         Integer serverPortNum;

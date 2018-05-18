@@ -22,16 +22,13 @@ import ru.nchernetsov.test.sbertech.common.message.*;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 import static ru.nchernetsov.test.sbertech.common.CommonData.SERVER_ADDRESS;
 import static ru.nchernetsov.test.sbertech.common.enums.MethodInvokeStatus.OK_RESULT;
+import static ru.nchernetsov.test.sbertech.common.enums.MethodInvokeStatus.OK_VOID;
 
 public class Client implements Addressee {
     private static final Logger LOG = LoggerFactory.getLogger(Client.class);
@@ -47,8 +44,8 @@ public class Client implements Addressee {
     private final CountDownLatch handshakeLatch = new CountDownLatch(1);
 
     // для каждого вызова метода remoteCall создаём отдельную CountDownLatch
-    private final Map<UUID, CountDownLatch> remoteCallLatches = new HashMap<>();
-    private final Map<UUID, Pair<MethodInvokeStatus, Object>> remoteCallResults = new HashMap<>();
+    private final Map<UUID, CountDownLatch> remoteCallLatches = new ConcurrentHashMap<>();
+    private final Map<UUID, Pair<MethodInvokeStatus, Object>> remoteCallResults = new ConcurrentHashMap<>();
 
     private final ConnectController connectController;
     private final MethodInvokeController methodInvokeController;
@@ -112,8 +109,34 @@ public class Client implements Addressee {
         Object remoteCallAnswer = remoteCall("DateService", "getCurrentDate", new Object[]{});
         LOG.info("Method result: ", remoteCallAnswer);
 
-        TimeUnit.MILLISECONDS.sleep(1000);
+        // тестируем работу в многопоточном режиме
+        for (int i = 0; i < 10; i++) {
+            new Thread(new Caller(this)).start();
+        }
+
+        // пока у нас есть необработанные запросы, не останавливаем основной Thread клиента
+        while (!remoteCallLatches.isEmpty()) {
+            Thread.sleep(PAUSE_MS);
+        }
         close();
+    }
+
+    private static class Caller implements Runnable {
+        private static final Logger logger = LoggerFactory.getLogger(Caller.class);
+        private final Client client;
+
+        Caller(Client client) {
+            this.client = client;
+        }
+
+        @Override
+        public void run() {
+            while (true) {
+                client.remoteCall("DateService", "sleep", new Object[]{1000L});
+                logger.info("Current Date is: {}",
+                    client.remoteCall("DateService", "getCurrentDate", new Object[]{}));
+            }
+        }
     }
 
     // Обработка ответов от сервера
@@ -151,19 +174,25 @@ public class Client implements Addressee {
 
     public Object remoteCall(String serviceName, String methodName, Object[] params) {
         DemandMessage demandMessage = new DemandMessage(address, SERVER_ADDRESS, serviceName, methodName, params);
+
         methodInvokeAnswerHandler.addDemandMessage(demandMessage);
         client.send(demandMessage);
         LOG.info("Отправлен запрос на удалённый вызов метода. Сервис: {}, метод: {}, параметры: {}",
             serviceName, methodName, Arrays.toString(params));
+
         blockRemoteCall(demandMessage.getUuid());
 
         Pair<MethodInvokeStatus, Object> remoteMethodResult = remoteCallResults.remove(demandMessage.getUuid());
         MethodInvokeStatus methodInvokeStatus = remoteMethodResult.getKey();
-        if (!methodInvokeStatus.equals(OK_RESULT)) {
+        if (!isStatusNormal(methodInvokeStatus)) {
             LOG.error("Вызов метода завершился неудачей. Статус вызова: {}", methodInvokeStatus);
             throw new RemoteCallException();
         }
         return remoteMethodResult.getValue();
+    }
+
+    private boolean isStatusNormal(MethodInvokeStatus methodInvokeStatus) {
+        return methodInvokeStatus.equals(OK_RESULT) || methodInvokeStatus.equals(OK_VOID);
     }
 
     private void blockRemoteCall(UUID demandMessageUUID) {

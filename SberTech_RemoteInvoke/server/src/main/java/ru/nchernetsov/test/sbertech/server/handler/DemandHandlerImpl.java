@@ -40,7 +40,7 @@ public class DemandHandlerImpl implements DemandHandler {
 
     private void handleDemand(Address clientAddress, MessageChannel clientChannel, String serviceName,
                               String methodName, Object[] methodParams, UUID toMessage) {
-        LOG.info("Запрос на выполнение метода от клиента: {}. Сервис: {}, методв: {}, параметры: {}",
+        LOG.info("Запрос на выполнение метода от клиента: {}. Сервис: {}, метод: {}, параметры: {}",
             clientAddress, serviceName, methodName, methodParams);
 
         // находим требуемый сервис

@@ -6,9 +6,9 @@ import ru.nchernetsov.test.sbertech.client.controller.MethodInvokeController;
 import ru.nchernetsov.test.sbertech.common.message.AnswerMessage;
 import ru.nchernetsov.test.sbertech.common.message.DemandMessage;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class MethodInvokeAnswerHandlerImpl implements MethodInvokeAnswerHandler {
     private static final Logger LOG = LoggerFactory.getLogger(MethodInvokeAnswerHandler.class);
@@ -18,13 +18,13 @@ public class MethodInvokeAnswerHandlerImpl implements MethodInvokeAnswerHandler 
     private final MethodInvokeController methodInvokeController;
 
     public MethodInvokeAnswerHandlerImpl(MethodInvokeController methodInvokeController) {
-        methodInvokeDemandMessages = new HashMap<>();
+        methodInvokeDemandMessages = new ConcurrentHashMap<>();
         this.methodInvokeController = methodInvokeController;
     }
 
     @Override
     public void handleMessage(AnswerMessage answerMessage) {
-        LOG.info("Получен ответ о вызове remote метода от сервера");
+        LOG.info("Получен ответ о вызове remote метода от сервера. Message: {}", answerMessage);
         try {
             UUID answerOnDemand = answerMessage.getToMessage();
             if (methodInvokeDemandMessages.containsKey(answerOnDemand)) {
