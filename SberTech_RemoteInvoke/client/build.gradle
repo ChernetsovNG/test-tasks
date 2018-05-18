@@ -1,0 +1,6 @@
+dependencies {
+    compile project(':common')
+
+    // for use class Pair
+    compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.7'
+}
