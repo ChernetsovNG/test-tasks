@@ -67,7 +67,7 @@ public class Solution {
             .collect(Collectors.toList());
         int j = 0;
         for (int i = 0; i < 20; i += 4) {
-            completableFutures[j] = createCompletableFutureForFiveTasks(pool, supplierTasks, tasksResults, i);
+            completableFutures[j] = createCompletableFutureForTasks(pool, supplierTasks, tasksResults, i);
             j++;
         }
 
@@ -88,7 +88,7 @@ public class Solution {
      * @param fromIndex    - first task index
      * @return - CompletableFuture for 4 tasks starting from index in list of tasks
      */
-    private CompletableFuture<Double> createCompletableFutureForFiveTasks(
+    private CompletableFuture<Double> createCompletableFutureForTasks(
         final ForkJoinPool pool, final List<Supplier<Double>> tasks, final double[] tasksResults, int fromIndex) {
 
         return CompletableFuture.supplyAsync(tasks.get(fromIndex), pool)
