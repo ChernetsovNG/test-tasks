@@ -77,7 +77,7 @@ public class Server implements Addressee {
     }
 
     public void start(int serverPort) throws Exception {
-        executor.submit(this::clientMessageHandle);
+        executor.submit(this::clientsMessagesHandle);
 
         // Ждём подключения клиентов к серверу. Для подключённых клиентов создаём каналы для связи
         try (ServerSocket serverSocket = new ServerSocket(serverPort)) {
@@ -121,7 +121,7 @@ public class Server implements Addressee {
     }
 
     // Обработка сообщений от клиентов
-    private void clientMessageHandle() {
+    private void clientsMessagesHandle() {
         try {
             LOG.info("Начат цикл обработки соединений клиентов");
             while (true) {
