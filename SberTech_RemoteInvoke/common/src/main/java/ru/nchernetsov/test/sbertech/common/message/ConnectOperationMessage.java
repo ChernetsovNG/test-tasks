@@ -12,12 +12,10 @@ import ru.nchernetsov.test.sbertech.common.enums.ConnectOperation;
 public class ConnectOperationMessage extends Message {
 
     private final ConnectOperation connectOperation;
-    private final Object additionalObject;
 
-    public ConnectOperationMessage(Address from, Address to, ConnectOperation connectOperation, Object additionalObject) {
+    public ConnectOperationMessage(Address from, Address to, ConnectOperation connectOperation) {
         super(from, to, ConnectOperationMessage.class);
         this.connectOperation = connectOperation;
-        this.additionalObject = additionalObject;
     }
 
 }

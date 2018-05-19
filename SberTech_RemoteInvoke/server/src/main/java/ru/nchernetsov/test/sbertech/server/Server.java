@@ -26,6 +26,7 @@ import java.util.concurrent.TimeUnit;
 
 import static ru.nchernetsov.test.sbertech.common.CommonData.DEFAULT_SERVER_PORT;
 import static ru.nchernetsov.test.sbertech.common.CommonData.SERVER_ADDRESS;
+import static ru.nchernetsov.test.sbertech.server.ReflectionHelper.instantiate;
 
 /**
  * Основной класс сервера
@@ -59,7 +60,7 @@ public class Server implements Addressee {
             Server server = new Server();
             server.start(serverPortNum);
         } catch (Exception e) {
-            e.printStackTrace();
+            LOG.error("Error to start Server: {}", e.getMessage());
         }
     }
 
@@ -115,7 +116,7 @@ public class Server implements Addressee {
             LOG.info("Init service: {}", serviceName);
             String serviceClassName = properties.getProperty(serviceName);
             Class<?> serviceClass = Class.forName(serviceClassName);
-            Object serviceObject = ReflectionHelper.instantiate(serviceClass);
+            Object serviceObject = instantiate(serviceClass);
             services.put(serviceName, serviceObject);
         }
     }
@@ -123,7 +124,7 @@ public class Server implements Addressee {
     // Обработка сообщений от клиентов
     private void clientsMessagesHandle() {
         try {
-            LOG.info("Начат цикл обработки соединений клиентов");
+            LOG.info("Начат цикл обработки сообщений клиентов");
             while (true) {
                 for (Map.Entry<MessageChannel, Address> client : connectDemandHandler.getClientAddressMap().entrySet()) {
                     MessageChannel clientChannel = client.getKey();

@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.*;
 
+import static ru.nchernetsov.test.sbertech.common.CommonData.DEFAULT_SERVER_PORT;
 import static ru.nchernetsov.test.sbertech.common.CommonData.SERVER_ADDRESS;
 import static ru.nchernetsov.test.sbertech.common.enums.MethodInvokeStatus.OK_RESULT;
 import static ru.nchernetsov.test.sbertech.common.enums.MethodInvokeStatus.OK_VOID;
@@ -45,7 +46,7 @@ public class Client implements Addressee {
     // ожидаем установления соединения с сервером, после чего снимаем блокировку обработки сообщений
     private final CountDownLatch handshakeLatch = new CountDownLatch(1);
 
-    // для каждого вызова метода remoteCall создаём отдельную CountDownLatch
+    // для каждого вызова метода remoteCall создаём отдельный объект CountDownLatch
     private final Map<UUID, CountDownLatch> remoteCallLatches = new ConcurrentHashMap<>();
     private final Map<UUID, Pair<MethodInvokeStatus, Object>> remoteCallResults = new ConcurrentHashMap<>();
 
@@ -73,10 +74,10 @@ public class Client implements Addressee {
 
         String clientAddress = stringCrypter.encrypt(randomString + macAddresses);
 
-        this.address = new Address(clientAddress);
+        address = new Address(clientAddress);
 
-        this.connectAnswerHandler = new ConnectAnswerHandlerImpl(this);
-        this.methodInvokeAnswerHandler = new MethodInvokeAnswerHandlerImpl(this);
+        connectAnswerHandler = new ConnectAnswerHandlerImpl(this);
+        methodInvokeAnswerHandler = new MethodInvokeAnswerHandlerImpl(this);
     }
 
     private void start(Integer serverPortNum) throws InterruptedException {
@@ -85,10 +86,10 @@ public class Client implements Addressee {
             if (serverPortNum != null) {
                 client = new SocketClientManagedChannel(HOST, serverPortNum);
             } else {
-                client = new SocketClientManagedChannel(HOST, CommonData.DEFAULT_SERVER_PORT);
+                client = new SocketClientManagedChannel(HOST, DEFAULT_SERVER_PORT);
             }
         } catch (IOException e) {
-            LOG.error(e.getMessage());
+            LOG.error("Error to start Client: {}", e.getMessage());
         }
         client.init();
 
@@ -167,7 +168,7 @@ public class Client implements Addressee {
                     } else if (serverMessage.isClass(MethodInvokeAnswerMessage.class)) {
                         methodInvokeAnswerHandler.handleMessage((MethodInvokeAnswerMessage) serverMessage);
                     } else {
-                        LOG.debug("Получено сообщение необрабатываемого класса. Message: {}", serverMessage);
+                        LOG.warn("Получено сообщение необрабатываемого класса. Message: {}", serverMessage);
                     }
                 } else {
                     TimeUnit.MILLISECONDS.sleep(PAUSE_MS);
@@ -179,7 +180,7 @@ public class Client implements Addressee {
     }
 
     private void handshakeOnServer() {
-        Message handshakeDemandMessage = new ConnectOperationMessage(address, SERVER_ADDRESS, ConnectOperation.HANDSHAKE, null);
+        Message handshakeDemandMessage = new ConnectOperationMessage(address, SERVER_ADDRESS, ConnectOperation.HANDSHAKE);
         connectAnswerHandler.setHandshakeMessageUuid(handshakeDemandMessage.getUuid());
         client.send(handshakeDemandMessage);
         LOG.debug("Отправлено сообщение об установлении соединения на сервер");
