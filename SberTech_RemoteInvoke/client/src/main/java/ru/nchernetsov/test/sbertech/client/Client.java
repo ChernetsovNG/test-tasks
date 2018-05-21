@@ -11,7 +11,6 @@ import ru.nchernetsov.test.sbertech.client.handler.MethodInvokeAnswerHandler;
 import ru.nchernetsov.test.sbertech.client.handler.MethodInvokeAnswerHandlerImpl;
 import ru.nchernetsov.test.sbertech.client.utils.ClientUtils;
 import ru.nchernetsov.test.sbertech.client.utils.RandomString;
-import ru.nchernetsov.test.sbertech.common.CommonData;
 import ru.nchernetsov.test.sbertech.common.channel.SocketClientChannel;
 import ru.nchernetsov.test.sbertech.common.channel.SocketClientManagedChannel;
 import ru.nchernetsov.test.sbertech.common.enums.ConnectOperation;
@@ -24,11 +23,11 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.*;
 
+import static ru.nchernetsov.test.sbertech.client.Client.Special.VOID;
 import static ru.nchernetsov.test.sbertech.common.CommonData.DEFAULT_SERVER_PORT;
 import static ru.nchernetsov.test.sbertech.common.CommonData.SERVER_ADDRESS;
 import static ru.nchernetsov.test.sbertech.common.enums.MethodInvokeStatus.OK_RESULT;
 import static ru.nchernetsov.test.sbertech.common.enums.MethodInvokeStatus.OK_VOID;
-import static ru.nchernetsov.test.sbertech.common.utils.StringCrypter.stringCrypter;
 
 /**
  * Основной класс клиента
@@ -212,7 +211,11 @@ public class Client implements Addressee {
             LOG.error("Вызов метода завершился неудачей. Статус вызова: {}", methodInvokeStatus);
             throw new RemoteCallException("RemoteCallException. Status: " + methodInvokeStatus);
         }
-        return remoteMethodResult.getValue();
+        if (methodInvokeStatus.equals(OK_RESULT)) {
+            return remoteMethodResult.getValue();
+        } else {
+            return VOID;
+        }
     }
 
     private boolean isStatusNormal(MethodInvokeStatus methodInvokeStatus) {
@@ -261,4 +264,5 @@ public class Client implements Addressee {
         return address;
     }
 
+    public enum Special {VOID}
 }

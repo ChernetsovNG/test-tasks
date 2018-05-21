@@ -19,7 +19,7 @@ public class SocketClientChannel implements MessageChannel {
     private static final int WORKERS_COUNT = 2;
 
     /**
-     * Очередь для исходящий (отправляемых в сокет) сообщений
+     * Очередь для исходящих (отправляемых в сокет) сообщений
      */
     private final BlockingQueue<Message> outputMessages = new LinkedBlockingQueue<>();
     /**
