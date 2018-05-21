@@ -20,13 +20,11 @@ public abstract class Message implements Serializable {
     private final UUID uuid;        // уникальный идентификатор сообщения
     private final Address from;
     private final Address to;
-    private final String className;
 
-    Message(Address from, Address to, Class<?> clazz) {
+    Message(Address from, Address to) {
         this.uuid = UUID.randomUUID();
         this.from = from;
         this.to = to;
-        this.className = clazz.getName();
     }
 
 }

@@ -1,7 +1,6 @@
 package ru.nchernetsov.test.sbertech.common.channel;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import ru.nchernetsov.test.sbertech.common.message.Message;
 
 import java.io.IOException;
@@ -14,8 +13,8 @@ import java.util.concurrent.*;
 /**
  * Сокетный канал для передачи сообщений
  */
+@Slf4j
 public class SocketClientChannel implements MessageChannel {
-    private static final Logger LOG = LoggerFactory.getLogger(SocketClientChannel.class);
     private static final int WORKERS_COUNT = 2;
 
     /**
@@ -50,7 +49,7 @@ public class SocketClientChannel implements MessageChannel {
                 out.writeObject(message);
             }
         } catch (InterruptedException | IOException e) {
-            LOG.error("sendMessage: " + e.getMessage() + "; exceptionClass: " + e.getClass());
+            log.error("sendMessage: " + e.getMessage() + "; exceptionClass: " + e.getClass());
         }
     }
 
@@ -63,7 +62,7 @@ public class SocketClientChannel implements MessageChannel {
                 inputMessages.add(message);
             }
         } catch (ClassNotFoundException | IOException e) {
-            LOG.error("receiveMessage: " + e.getMessage() + "; exceptionClass: " + e.getClass());
+            log.error("receiveMessage: " + e.getMessage() + "; exceptionClass: " + e.getClass());
         }
     }
 

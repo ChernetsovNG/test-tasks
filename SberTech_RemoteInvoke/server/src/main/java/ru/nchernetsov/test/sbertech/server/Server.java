@@ -1,7 +1,6 @@
 package ru.nchernetsov.test.sbertech.server;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import ru.nchernetsov.test.sbertech.common.channel.MessageChannel;
 import ru.nchernetsov.test.sbertech.common.channel.SocketClientChannel;
 import ru.nchernetsov.test.sbertech.common.enums.ConnectOperation;
@@ -27,8 +26,8 @@ import static ru.nchernetsov.test.sbertech.server.ReflectionHelper.instantiate;
 /**
  * Основной класс сервера
  */
+@Slf4j
 public class Server implements Addressee {
-    private static final Logger LOG = LoggerFactory.getLogger(Server.class);
     private static final String SERVICES_DESCRIPTION_FILE = "server.properties";
 
     private static final int RECEIVING_THREADS_COUNT = 5;
@@ -63,7 +62,7 @@ public class Server implements Addressee {
             Server server = new Server();
             server.start(serverPortNum);
         } catch (Exception e) {
-            LOG.error("Error to start Server: {}", e.getMessage());
+            log.error("Error to start Server: {}", e.getMessage());
         }
     }
 
@@ -81,14 +80,14 @@ public class Server implements Addressee {
     private void start(int serverPort) throws Exception {
         // Ждём подключения клиентов к серверу. Для подключённых клиентов создаём каналы для связи
         try (ServerSocket serverSocket = new ServerSocket(serverPort)) {
-            LOG.info("Server started on port: " + serverSocket.getLocalPort());
+            log.info("Server started on port: " + serverSocket.getLocalPort());
 
             receivingCommandExecutor.submit(this::clientsConnectionsHandle);
 
             while (!receivingCommandExecutor.isShutdown()) {
                 Socket client = serverSocket.accept();  // blocks
 
-                LOG.info("Client connect: " + client);
+                log.info("Client connect: " + client);
 
                 SocketClientChannel channel = new SocketClientChannel(client);
                 channel.init();
@@ -102,7 +101,7 @@ public class Server implements Addressee {
     // Обработка соединений клиентов (заполнение карты адресов)
     private void clientsConnectionsHandle() {
         try {
-            LOG.info("Начат цикл обработки соединений клиентов");
+            log.info("Начат цикл обработки соединений клиентов");
             while (true) {
                 // обходим всех клиентов, и для каждого извлекаем из очереди и выполняем очередную команду
                 connectionMap.forEach((clientChannel, address) ->
@@ -110,7 +109,7 @@ public class Server implements Addressee {
                 TimeUnit.MILLISECONDS.sleep(MESSAGE_DELAY_MS);
             }
         } catch (InterruptedException e) {
-            LOG.error(e.getMessage());
+            log.error(e.getMessage());
         }
     }
 
@@ -124,14 +123,14 @@ public class Server implements Addressee {
                 if (clientAddress.equals(EMPTY_ADDRESS)) {
                     if (connectOperation.equals(HANDSHAKE)) {
                         Address messageAddress = connectOperationMessage.getFrom();
-                        LOG.info("Получен запрос на установление соединения от: {}. Message: {}", messageAddress, connectOperationMessage);
+                        log.info("Получен запрос на установление соединения от: {}. Message: {}", messageAddress, connectOperationMessage);
                         connectionMap.put(clientChannel, messageAddress);
                         ConnectAnswerMessage handshakeAnswerMessage = new ConnectAnswerMessage(
                             SERVER_ADDRESS, messageAddress, connectOperationMessage.getUuid(), HANDSHAKE_OK);
                         clientChannel.send(handshakeAnswerMessage);
-                        LOG.info("Направлен ответ об успешном установлении соединения клиенту: {}. Message: {}", messageAddress, handshakeAnswerMessage);
+                        log.info("Направлен ответ об успешном установлении соединения клиенту: {}. Message: {}", messageAddress, handshakeAnswerMessage);
                     } else {
-                        LOG.info("Получен не HANDSHAKE запрос от нового клиента. Message: {}", connectOperationMessage);
+                        log.info("Получен не HANDSHAKE запрос от нового клиента. Message: {}", connectOperationMessage);
                     }
                 }
             } else if (message instanceof MethodInvokeDemandMessage) {
@@ -143,7 +142,7 @@ public class Server implements Addressee {
                         String methodName = methodInvokeDemandMessage.getMethodName();
                         Object[] methodParams = methodInvokeDemandMessage.getMethodParams();
 
-                        LOG.info("Запрос на выполнение метода от клиента: {}. Сервис: {}, метод: {}, параметры: {}",
+                        log.info("Запрос на выполнение метода от клиента: {}. Сервис: {}, метод: {}, параметры: {}",
                             clientAddress, serviceName, methodName, methodParams);
 
                         // находим требуемый сервис
@@ -171,7 +170,7 @@ public class Server implements Addressee {
                         .thenAcceptAsync(clientChannel::send, handleCommandExecutor);  // после получение результата асинхронно возвращаем его клиенту
                 }
             } else {
-                LOG.warn("От клиента получено сообщение необрабатываемог класса. Message: {}", message);
+                log.warn("От клиента получено сообщение необрабатываемог класса. Message: {}", message);
             }
         }
     }
@@ -180,7 +179,7 @@ public class Server implements Addressee {
     private void initServices() throws IOException, ClassNotFoundException, InvocationTargetException,
         NoSuchMethodException, InstantiationException, IllegalAccessException {
 
-        LOG.info("Init server services");
+        log.info("Init server services");
         Properties properties = new Properties();
         InputStream inputStream = getClass().getClassLoader().getResourceAsStream(SERVICES_DESCRIPTION_FILE);
         if (inputStream != null) {
@@ -191,7 +190,7 @@ public class Server implements Addressee {
         Enumeration<?> enumeration = properties.propertyNames();
         while (enumeration.hasMoreElements()) {
             String serviceName = (String) enumeration.nextElement();
-            LOG.info("Init service: {}", serviceName);
+            log.info("Init service: {}", serviceName);
             String serviceClassName = properties.getProperty(serviceName);
             Class<?> serviceClass = Class.forName(serviceClassName);
             Object serviceObject = instantiate(serviceClass);

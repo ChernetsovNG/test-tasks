@@ -14,7 +14,7 @@ public class ConnectOperationMessage extends Message {
     private final ConnectOperation connectOperation;
 
     public ConnectOperationMessage(Address from, Address to, ConnectOperation connectOperation) {
-        super(from, to, ConnectOperationMessage.class);
+        super(from, to);
         this.connectOperation = connectOperation;
     }
 

@@ -1,9 +1,8 @@
 package ru.nchernetsov.test.sbertech.client;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import ru.nchernetsov.test.sbertech.client.exception.RemoteCallException;
 import ru.nchernetsov.test.sbertech.client.handler.ConnectAnswerHandler;
 import ru.nchernetsov.test.sbertech.client.handler.ConnectAnswerHandlerImpl;
@@ -32,9 +31,8 @@ import static ru.nchernetsov.test.sbertech.common.enums.MethodInvokeStatus.OK_VO
 /**
  * Основной класс клиента
  */
+@Slf4j
 public class Client implements Addressee {
-    private static final Logger LOG = LoggerFactory.getLogger(Client.class);
-
     private static final String HOST = "localhost";
 
     private static final int PAUSE_MS = 223;
@@ -81,7 +79,7 @@ public class Client implements Addressee {
     }
 
     private void start(Integer serverPortNum) throws InterruptedException {
-        LOG.info("Client process started");
+        log.info("Client process started");
         try {
             if (serverPortNum != null) {
                 client = new SocketClientManagedChannel(HOST, serverPortNum);
@@ -89,7 +87,7 @@ public class Client implements Addressee {
                 client = new SocketClientManagedChannel(HOST, DEFAULT_SERVER_PORT);
             }
         } catch (IOException e) {
-            LOG.error("Error to start Client: {}", e.getMessage());
+            log.error("Error to start Client: {}", e.getMessage());
         }
         client.init();
 
@@ -114,9 +112,9 @@ public class Client implements Addressee {
         // отправляем сообщение об удалённом вызове метода
         try {
             Object remoteCallAnswer = remoteCall("DateService", "sleep", 5_000L);
-            LOG.info("Method result: {}", remoteCallAnswer);
+            log.info("Method result: {}", remoteCallAnswer);
         } catch (RemoteCallException e) {
-            LOG.error("RemoteCallException: {}", e.getMessage());
+            log.error("RemoteCallException: {}", e.getMessage());
         }
     }
 
@@ -124,9 +122,9 @@ public class Client implements Addressee {
         // отправляем сообщение об удалённом вызове метода
         try {
             Object remoteCallAnswer = remoteCall("MathService", "multiply", 3, 9);
-            LOG.info("Method result: {}", remoteCallAnswer);
+            log.info("Method result: {}", remoteCallAnswer);
         } catch (RemoteCallException e) {
-            LOG.error("RemoteCallException: {}", e.getMessage());
+            log.error("RemoteCallException: {}", e.getMessage());
         }
 
         // тестируем работу в многопоточном режиме
@@ -135,8 +133,8 @@ public class Client implements Addressee {
         }
     }
 
+    @Slf4j
     private static class Caller implements Runnable {
-        private static final Logger logger = LoggerFactory.getLogger(Caller.class);
         private final Client client;
 
         Caller(Client client) {
@@ -148,10 +146,10 @@ public class Client implements Addressee {
             while (true) {
                 try {
                     client.remoteCall("DateService", "sleep", 1000L);
-                    logger.info("Current Date is: {}",
+                    log.info("Current Date is: {}",
                         client.remoteCall("DateService", "getCurrentDate"));
                 } catch (RemoteCallException e) {
-                    logger.error("RemoteCallException: {}", e.getMessage());
+                    log.error("RemoteCallException: {}", e.getMessage());
                 }
             }
         }
@@ -168,14 +166,14 @@ public class Client implements Addressee {
                     } else if (serverMessage instanceof MethodInvokeAnswerMessage) {
                         methodInvokeAnswerHandler.handleMessage((MethodInvokeAnswerMessage) serverMessage);
                     } else {
-                        LOG.warn("Получено сообщение необрабатываемого класса. Message: {}", serverMessage);
+                        log.warn("Получено сообщение необрабатываемого класса. Message: {}", serverMessage);
                     }
                 } else {
                     TimeUnit.MILLISECONDS.sleep(PAUSE_MS);
                 }
             }
         } catch (InterruptedException e) {
-            LOG.error(e.getMessage());
+            log.error(e.getMessage());
         }
     }
 
@@ -183,7 +181,7 @@ public class Client implements Addressee {
         Message handshakeDemandMessage = new ConnectOperationMessage(address, SERVER_ADDRESS, ConnectOperation.HANDSHAKE);
         connectAnswerHandler.setHandshakeMessageUuid(handshakeDemandMessage.getUuid());
         client.send(handshakeDemandMessage);
-        LOG.debug("Отправлено сообщение об установлении соединения на сервер");
+        log.debug("Отправлено сообщение об установлении соединения на сервер");
     }
 
     /**
@@ -200,7 +198,7 @@ public class Client implements Addressee {
 
         methodInvokeAnswerHandler.addDemandMessage(demandMessage);
         client.send(demandMessage);
-        LOG.info("Отправлен запрос на удалённый вызов метода. Сервис: {}, метод: {}, параметры: {}",
+        log.info("Отправлен запрос на удалённый вызов метода. Сервис: {}, метод: {}, параметры: {}",
             serviceName, methodName, Arrays.toString(params));
 
         blockRemoteCall(demandMessage.getUuid());
@@ -208,7 +206,7 @@ public class Client implements Addressee {
         Pair<MethodInvokeStatus, Object> remoteMethodResult = remoteCallResults.remove(demandMessage.getUuid());
         MethodInvokeStatus methodInvokeStatus = remoteMethodResult.getKey();
         if (!isStatusNormal(methodInvokeStatus)) {
-            LOG.error("Вызов метода завершился неудачей. Статус вызова: {}", methodInvokeStatus);
+            log.error("Вызов метода завершился неудачей. Статус вызова: {}", methodInvokeStatus);
             throw new RemoteCallException("RemoteCallException. Status: " + methodInvokeStatus);
         }
         if (methodInvokeStatus.equals(OK_RESULT)) {
@@ -229,7 +227,7 @@ public class Client implements Addressee {
         try {
             countDownLatch.await();
         } catch (InterruptedException e) {
-            LOG.error(e.getMessage());
+            log.error(e.getMessage());
         }
         // после снятия блокировки удаляем CountDownLatch для данного запроса
         remoteCallLatches.remove(demandMessageUUID);

@@ -17,7 +17,7 @@ public class ConnectAnswerMessage extends Message {
     private final ConnectStatus connectStatus;
 
     public ConnectAnswerMessage(Address from, Address to, UUID toMessage, ConnectStatus connectStatus) {
-        super(from, to, ConnectAnswerMessage.class);
+        super(from, to);
         this.toMessage = toMessage;
         this.connectStatus = connectStatus;
     }

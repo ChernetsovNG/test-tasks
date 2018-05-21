@@ -18,7 +18,7 @@ public class MethodInvokeAnswerMessage extends Message {
     private final Object result;
 
     public MethodInvokeAnswerMessage(Address from, Address to, UUID toMessage, MethodInvokeStatus methodInvokeStatus, Object result) {
-        super(from, to, MethodInvokeAnswerMessage.class);
+        super(from, to);
         this.toMessage = toMessage;
         this.methodInvokeStatus = methodInvokeStatus;
         this.result = result;

@@ -15,7 +15,7 @@ public class MethodInvokeDemandMessage extends Message {
     private final Object[] methodParams;
 
     public MethodInvokeDemandMessage(Address from, Address to, String serviceName, String methodName, Object[] methodParams) {
-        super(from, to, MethodInvokeDemandMessage.class);
+        super(from, to);
         this.serviceName = serviceName;
         this.methodName = methodName;
         this.methodParams = methodParams;

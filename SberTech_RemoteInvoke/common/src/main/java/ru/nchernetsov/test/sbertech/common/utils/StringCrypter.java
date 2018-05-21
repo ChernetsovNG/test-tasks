@@ -1,8 +1,7 @@
 package ru.nchernetsov.test.sbertech.common.utils;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.crypto.*;
 import java.io.IOException;
@@ -13,9 +12,8 @@ import java.security.NoSuchAlgorithmException;
 /**
  * Singleton для шифрования и дешифрования строк
  */
+@Slf4j
 public class StringCrypter {
-    private static final Logger LOG = LoggerFactory.getLogger(StringCrypter.class);
-
     public static final StringCrypter stringCrypter;
 
     static {
@@ -79,7 +77,7 @@ public class StringCrypter {
             byte[] enc = ecipher.doFinal(utf8);
             return Base64.encodeBase64String(enc);
         } catch (IllegalBlockSizeException | BadPaddingException | UnsupportedEncodingException ex) {
-            LOG.error(ex.getMessage());
+            log.error(ex.getMessage());
         }
         return null;
     }
@@ -90,7 +88,7 @@ public class StringCrypter {
             byte[] utf8 = dcipher.doFinal(dec);
             return new String(utf8, "UTF8");
         } catch (IllegalBlockSizeException | BadPaddingException | IOException ex) {
-            LOG.error(ex.getMessage());
+            log.error(ex.getMessage());
         }
         return null;
     }
