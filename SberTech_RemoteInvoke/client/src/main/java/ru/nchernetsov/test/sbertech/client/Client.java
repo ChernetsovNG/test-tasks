@@ -163,9 +163,9 @@ public class Client implements Addressee {
             while (true) {
                 Message serverMessage = client.take();
                 if (serverMessage != null) {
-                    if (serverMessage.isClass(ConnectAnswerMessage.class)) {
+                    if (serverMessage instanceof ConnectAnswerMessage) {
                         connectAnswerHandler.handleMessage((ConnectAnswerMessage) serverMessage);
-                    } else if (serverMessage.isClass(MethodInvokeAnswerMessage.class)) {
+                    } else if (serverMessage instanceof MethodInvokeAnswerMessage) {
                         methodInvokeAnswerHandler.handleMessage((MethodInvokeAnswerMessage) serverMessage);
                     } else {
                         LOG.warn("Получено сообщение необрабатываемого класса. Message: {}", serverMessage);

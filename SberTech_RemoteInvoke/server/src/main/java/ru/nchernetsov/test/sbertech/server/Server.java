@@ -21,7 +21,6 @@ import static ru.nchernetsov.test.sbertech.common.CommonData.SERVER_ADDRESS;
 import static ru.nchernetsov.test.sbertech.common.enums.ConnectOperation.HANDSHAKE;
 import static ru.nchernetsov.test.sbertech.common.enums.ConnectStatus.HANDSHAKE_OK;
 import static ru.nchernetsov.test.sbertech.common.enums.MethodInvokeStatus.*;
-import static ru.nchernetsov.test.sbertech.common.enums.MethodInvokeStatus.NO_SUCH_METHOD;
 import static ru.nchernetsov.test.sbertech.server.ReflectionHelper.callMethod;
 import static ru.nchernetsov.test.sbertech.server.ReflectionHelper.instantiate;
 
@@ -32,7 +31,7 @@ public class Server implements Addressee {
     private static final Logger LOG = LoggerFactory.getLogger(Server.class);
     private static final String SERVICES_DESCRIPTION_FILE = "server.properties";
 
-    private static final int RECEIVING_THREADS_COUNT = 20;
+    private static final int RECEIVING_THREADS_COUNT = 5;
     private static final int HANDLE_THREADS_COUNT = 5;
     private static final int MESSAGE_DELAY_MS = 117;
 
@@ -84,6 +83,8 @@ public class Server implements Addressee {
         try (ServerSocket serverSocket = new ServerSocket(serverPort)) {
             LOG.info("Server started on port: " + serverSocket.getLocalPort());
 
+            receivingCommandExecutor.submit(this::clientsConnectionsHandle);
+
             while (!receivingCommandExecutor.isShutdown()) {
                 Socket client = serverSocket.accept();  // blocks
 
@@ -94,85 +95,84 @@ public class Server implements Addressee {
                 channel.addShutdownRegistration(() -> removeClientChannel(channel));
 
                 connectionMap.put(channel, EMPTY_ADDRESS);
-
-                // для каждого клиента создаём собственный обработчик
-                receivingCommandExecutor.submit(() -> clientMessagesHandle(channel));
             }
         }
     }
 
-    // Обработка сообщений от клиентов (по одному потоку на каждого клиента для приёма команд)
-    private void clientMessagesHandle(MessageChannel clientChannel) {
+    // Обработка соединений клиентов (заполнение карты адресов)
+    private void clientsConnectionsHandle() {
         try {
-            LOG.info("Начат цикл обработки сообщений клиента");
+            LOG.info("Начат цикл обработки соединений клиентов");
             while (true) {
-                Message message = clientChannel.poll();
-                Address clientAddress = connectionMap.get(clientChannel);
-                if (message != null) {
-                    if (message.isClass(ConnectOperationMessage.class)) {
-                        ConnectOperationMessage connectOperationMessage = (ConnectOperationMessage) message;
-                        ConnectOperation connectOperation = connectOperationMessage.getConnectOperation();
-                        if (clientAddress.equals(EMPTY_ADDRESS)) {
-                            if (connectOperation.equals(HANDSHAKE)) {
-                                Address messageAddress = connectOperationMessage.getFrom();
-                                LOG.info("Получен запрос на установление соединения от: {}. Message: {}", messageAddress, connectOperationMessage);
-                                connectionMap.put(clientChannel, messageAddress);
-                                ConnectAnswerMessage handshakeAnswerMessage = new ConnectAnswerMessage(
-                                    SERVER_ADDRESS, messageAddress, connectOperationMessage.getUuid(), HANDSHAKE_OK);
-                                clientChannel.send(handshakeAnswerMessage);
-                                LOG.info("Направлен ответ об успешном установлении соединения клиенту: {}. Message: {}", messageAddress, handshakeAnswerMessage);
-                            } else {
-                                LOG.info("Получен не HANDSHAKE запрос от нового клиента. Message: {}", connectOperationMessage);
-                            }
-                        }
-                    } else if (message.isClass(MethodInvokeDemandMessage.class)) {
-                        MethodInvokeDemandMessage methodInvokeDemandMessage = (MethodInvokeDemandMessage) message;
-                        if (getClientName(clientChannel).isPresent()) {
-                            Future<MethodInvokeAnswerMessage> answerFuture = handleCommandExecutor.submit(() -> {
-                                UUID toMessage = methodInvokeDemandMessage.getUuid();
-                                String serviceName = methodInvokeDemandMessage.getServiceName();
-                                String methodName = methodInvokeDemandMessage.getMethodName();
-                                Object[] methodParams = methodInvokeDemandMessage.getMethodParams();
-
-                                LOG.info("Запрос на выполнение метода от клиента: {}. Сервис: {}, метод: {}, параметры: {}",
-                                    clientAddress, serviceName, methodName, methodParams);
-
-                                // находим требуемый сервис
-                                Object service = services.get(serviceName);
-
-                                MethodInvokeAnswerMessage answerMessage;
-                                if (service == null) {
-                                    answerMessage = new MethodInvokeAnswerMessage(SERVER_ADDRESS, clientAddress, toMessage, SERVICE_NOT_EXISTS, null);
-                                } else {
-                                    try {
-                                        Object methodResult = callMethod(service, methodName, methodParams);
-                                        if (methodResult == null) {  // если вызывается метод с типом возвращаемого значения void
-                                            answerMessage = new MethodInvokeAnswerMessage(SERVER_ADDRESS, clientAddress, toMessage, OK_VOID, null);
-                                        } else {
-                                            answerMessage = new MethodInvokeAnswerMessage(SERVER_ADDRESS, clientAddress, toMessage, OK_RESULT, methodResult);
-                                        }
-                                    } catch (InvocationTargetException | IllegalAccessException e) {
-                                        answerMessage = new MethodInvokeAnswerMessage(SERVER_ADDRESS, clientAddress, toMessage, METHOD_INVOKE_EXCEPTION, null);
-                                    } catch (NoSuchMethodException e) {
-                                        answerMessage = new MethodInvokeAnswerMessage(SERVER_ADDRESS, clientAddress, toMessage, NO_SUCH_METHOD, null);
-                                    }
-                                }
-                                return answerMessage;
-                            });
-                            try {
-                                clientChannel.send(answerFuture.get());  // blocks here
-                            } catch (ExecutionException e) {
-                                LOG.error("Client command execution exception: {}", e.getMessage());
-                            }
-                        }
-                    } else {
-                        LOG.warn("От клиента получено сообщение необрабатываемог класса. Message: {}", message);
-                    }
-                }
+                // обходим всех клиентов, и для каждого извлекаем из очереди и выполняем очередную команду
+                connectionMap.forEach((clientChannel, address) ->
+                    receivingCommandExecutor.submit(() -> receiveAndHandleCommand(clientChannel)));
                 TimeUnit.MILLISECONDS.sleep(MESSAGE_DELAY_MS);
             }
         } catch (InterruptedException e) {
             LOG.error(e.getMessage());
+        }
+    }
+
+    private void receiveAndHandleCommand(MessageChannel clientChannel) {
+        Message message = clientChannel.poll();
+        Address clientAddress = connectionMap.get(clientChannel);
+        if (message != null) {
+            if (message instanceof ConnectOperationMessage) {
+                ConnectOperationMessage connectOperationMessage = (ConnectOperationMessage) message;
+                ConnectOperation connectOperation = connectOperationMessage.getConnectOperation();
+                if (clientAddress.equals(EMPTY_ADDRESS)) {
+                    if (connectOperation.equals(HANDSHAKE)) {
+                        Address messageAddress = connectOperationMessage.getFrom();
+                        LOG.info("Получен запрос на установление соединения от: {}. Message: {}", messageAddress, connectOperationMessage);
+                        connectionMap.put(clientChannel, messageAddress);
+                        ConnectAnswerMessage handshakeAnswerMessage = new ConnectAnswerMessage(
+                            SERVER_ADDRESS, messageAddress, connectOperationMessage.getUuid(), HANDSHAKE_OK);
+                        clientChannel.send(handshakeAnswerMessage);
+                        LOG.info("Направлен ответ об успешном установлении соединения клиенту: {}. Message: {}", messageAddress, handshakeAnswerMessage);
+                    } else {
+                        LOG.info("Получен не HANDSHAKE запрос от нового клиента. Message: {}", connectOperationMessage);
+                    }
+                }
+            } else if (message instanceof MethodInvokeDemandMessage) {
+                MethodInvokeDemandMessage methodInvokeDemandMessage = (MethodInvokeDemandMessage) message;
+                if (getClientAddress(clientChannel).isPresent()) {
+                    CompletableFuture.supplyAsync(() -> {
+                        UUID toMessage = methodInvokeDemandMessage.getUuid();
+                        String serviceName = methodInvokeDemandMessage.getServiceName();
+                        String methodName = methodInvokeDemandMessage.getMethodName();
+                        Object[] methodParams = methodInvokeDemandMessage.getMethodParams();
+
+                        LOG.info("Запрос на выполнение метода от клиента: {}. Сервис: {}, метод: {}, параметры: {}",
+                            clientAddress, serviceName, methodName, methodParams);
+
+                        // находим требуемый сервис
+                        Object service = services.get(serviceName);
+
+                        MethodInvokeAnswerMessage answerMessage;
+                        if (service == null) {
+                            answerMessage = new MethodInvokeAnswerMessage(SERVER_ADDRESS, clientAddress, toMessage, SERVICE_NOT_EXISTS, null);
+                        } else {
+                            try {
+                                Object methodResult = callMethod(service, methodName, methodParams);
+                                if (methodResult == null) {  // если вызывается метод с типом возвращаемого значения void
+                                    answerMessage = new MethodInvokeAnswerMessage(SERVER_ADDRESS, clientAddress, toMessage, OK_VOID, null);
+                                } else {
+                                    answerMessage = new MethodInvokeAnswerMessage(SERVER_ADDRESS, clientAddress, toMessage, OK_RESULT, methodResult);
+                                }
+                            } catch (InvocationTargetException | IllegalAccessException e) {
+                                answerMessage = new MethodInvokeAnswerMessage(SERVER_ADDRESS, clientAddress, toMessage, METHOD_INVOKE_EXCEPTION, null);
+                            } catch (NoSuchMethodException e) {
+                                answerMessage = new MethodInvokeAnswerMessage(SERVER_ADDRESS, clientAddress, toMessage, NO_SUCH_METHOD, null);
+                            }
+                        }
+                        return answerMessage;
+                    }, handleCommandExecutor)
+                        .thenAcceptAsync(clientChannel::send, handleCommandExecutor);  // после получение результата асинхронно возвращаем его клиенту
+                }
+            } else {
+                LOG.warn("От клиента получено сообщение необрабатываемог класса. Message: {}", message);
+            }
         }
     }
 
@@ -208,7 +208,7 @@ public class Server implements Addressee {
         return address;
     }
 
-    private Optional<String> getClientName(MessageChannel clientChannel) {
+    private Optional<String> getClientAddress(MessageChannel clientChannel) {
         if (connectionMap.containsKey(clientChannel)) {
             return Optional.of(connectionMap.get(clientChannel).getAddress());
         } else {

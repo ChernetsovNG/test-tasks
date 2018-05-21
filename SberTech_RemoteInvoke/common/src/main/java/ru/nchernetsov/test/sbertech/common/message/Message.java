@@ -29,9 +29,4 @@ public abstract class Message implements Serializable {
         this.className = clazz.getName();
     }
 
-    // Проверяем класс сообщения
-    public boolean isClass(Class clazz) {
-        return this.className.equals(clazz.getName());
-    }
-
 }
