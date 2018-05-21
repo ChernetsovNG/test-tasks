@@ -159,10 +159,8 @@ public class Server implements Addressee {
                                 }
                                 return answerMessage;
                             });
-                            MethodInvokeAnswerMessage answerMessage = null;
                             try {
-                                answerMessage = answerFuture.get();
-                                clientChannel.send(answerMessage);
+                                clientChannel.send(answerFuture.get());  // blocks here
                             } catch (ExecutionException e) {
                                 LOG.error("Client command execution exception: {}", e.getMessage());
                             }

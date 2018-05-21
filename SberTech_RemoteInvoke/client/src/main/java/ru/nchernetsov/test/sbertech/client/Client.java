@@ -113,7 +113,7 @@ public class Client implements Addressee {
     private void testRun1() {
         // отправляем сообщение об удалённом вызове метода
         try {
-            Object remoteCallAnswer = remoteCall("DateService", "sleep", new Object[]{5_000L});
+            Object remoteCallAnswer = remoteCall("DateService", "sleep", 5_000L);
             LOG.info("Method result: {}", remoteCallAnswer);
         } catch (RemoteCallException e) {
             LOG.error("RemoteCallException: {}", e.getMessage());
@@ -123,7 +123,7 @@ public class Client implements Addressee {
     private void testRun2() {
         // отправляем сообщение об удалённом вызове метода
         try {
-            Object remoteCallAnswer = remoteCall("MathService", "multiply", new Object[]{3, 9});
+            Object remoteCallAnswer = remoteCall("MathService", "multiply", 3, 9);
             LOG.info("Method result: {}", remoteCallAnswer);
         } catch (RemoteCallException e) {
             LOG.error("RemoteCallException: {}", e.getMessage());
@@ -147,9 +147,9 @@ public class Client implements Addressee {
         public void run() {
             while (true) {
                 try {
-                    client.remoteCall("DateService", "sleep", new Object[]{1000L});
+                    client.remoteCall("DateService", "sleep", 1000L);
                     logger.info("Current Date is: {}",
-                        client.remoteCall("DateService", "getCurrentDate", new Object[]{}));
+                        client.remoteCall("DateService", "getCurrentDate"));
                 } catch (RemoteCallException e) {
                     logger.error("RemoteCallException: {}", e.getMessage());
                 }
@@ -195,7 +195,7 @@ public class Client implements Addressee {
      * @return - результат работы удалённого метода (или null в случае void метода)
      * @throws RemoteCallException - если вызов удалённого метода завершился неудачей
      */
-    public Object remoteCall(String serviceName, String methodName, Object[] params) throws RemoteCallException {
+    public Object remoteCall(String serviceName, String methodName, Object... params) throws RemoteCallException {
         MethodInvokeDemandMessage demandMessage = new MethodInvokeDemandMessage(address, SERVER_ADDRESS, serviceName, methodName, params);
 
         methodInvokeAnswerHandler.addDemandMessage(demandMessage);
