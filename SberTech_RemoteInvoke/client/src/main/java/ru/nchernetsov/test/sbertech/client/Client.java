@@ -72,7 +72,8 @@ public class Client implements Addressee {
         RandomString randomStringGenerator = new RandomString(10);
         String randomString = randomStringGenerator.nextString();
 
-        String clientAddress = stringCrypter.encrypt(randomString + macAddresses);
+        // String clientAddress = stringCrypter.encrypt(randomString + macAddresses);
+        String clientAddress = randomString + macAddresses;
 
         address = new Address(clientAddress);
 
