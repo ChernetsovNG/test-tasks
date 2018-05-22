@@ -143,7 +143,7 @@ public class Client implements Addressee {
 
         @Override
         public void run() {
-            while (true) {
+            for (int i = 0; i < 10; i++) {
                 try {
                     client.remoteCall("DateService", "sleep", 1000L);
                     log.info("Current Date is: {}",

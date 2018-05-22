@@ -48,8 +48,10 @@ public class SocketClientChannel implements MessageChannel {
                 Message message = outputMessages.take();  // blocks here
                 out.writeObject(message);
             }
-        } catch (InterruptedException | IOException e) {
-            log.error("sendMessage: " + e.getMessage() + "; exceptionClass: " + e.getClass());
+        } catch (InterruptedException e) {
+            log.warn("Socket was closed by client. Interrupt channel");
+        } catch (IOException e) {
+            log.warn("Socket was closed by client");
         }
     }
 
@@ -61,8 +63,10 @@ public class SocketClientChannel implements MessageChannel {
                 Message message = (Message) readObject;
                 inputMessages.add(message);
             }
-        } catch (ClassNotFoundException | IOException e) {
+        } catch (ClassNotFoundException e) {
             log.error("receiveMessage: " + e.getMessage() + "; exceptionClass: " + e.getClass());
+        } catch (IOException e) {
+            log.warn("Socket was closed by client. Interrupt channel");
         }
     }
 
@@ -88,7 +92,7 @@ public class SocketClientChannel implements MessageChannel {
     public void close() throws IOException {
         shutdownRegistrations.forEach(Runnable::run);
         shutdownRegistrations.clear();
-        executor.shutdownNow();
+        executor.shutdown();
     }
 
 }

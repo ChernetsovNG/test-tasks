@@ -199,7 +199,7 @@ public class Server implements Addressee {
     }
 
     public void stop() {
-        receivingCommandExecutor.shutdownNow();
+        receivingCommandExecutor.shutdown();
     }
 
     @Override
