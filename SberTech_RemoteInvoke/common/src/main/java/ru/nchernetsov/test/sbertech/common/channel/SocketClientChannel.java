@@ -2,6 +2,7 @@ package ru.nchernetsov.test.sbertech.common.channel;
 
 import lombok.extern.slf4j.Slf4j;
 import ru.nchernetsov.test.sbertech.common.message.Message;
+import ru.nchernetsov.test.sbertech.common.message.PoisonPill;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -44,14 +45,17 @@ public class SocketClientChannel implements MessageChannel {
     // прочитать сообщение из очереди и отправить его в сокетный канал
     private void sendMessage() {
         try (ObjectOutputStream out = new ObjectOutputStream(clientSocket.getOutputStream())) {
-            while (clientSocket.isConnected()) {
+            while (!clientSocket.isClosed()) {
                 Message message = outputMessages.take();  // blocks here
+                if (message instanceof PoisonPill) {
+                    break;
+                }
                 out.writeObject(message);
             }
         } catch (InterruptedException e) {
             log.warn("Socket was closed by client. Interrupt channel");
         } catch (IOException e) {
-            log.warn("Socket was closed by client");
+            log.warn("sendMessage: Socket was closed by client");
         }
     }
 
@@ -66,7 +70,7 @@ public class SocketClientChannel implements MessageChannel {
         } catch (ClassNotFoundException e) {
             log.error("receiveMessage: " + e.getMessage() + "; exceptionClass: " + e.getClass());
         } catch (IOException e) {
-            log.warn("Socket was closed by client. Interrupt channel");
+            log.warn("receiveMessage: Socket was closed by client. Interrupt channel");
         }
     }
 
@@ -92,7 +96,18 @@ public class SocketClientChannel implements MessageChannel {
     public void close() throws IOException {
         shutdownRegistrations.forEach(Runnable::run);
         shutdownRegistrations.clear();
+
+        inputMessages.add(new PoisonPill(null, null));
+        outputMessages.add(new PoisonPill(null, null));
+        try {
+            executor.awaitTermination(500L, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            log.warn("Client shutdown");
+        }
         executor.shutdown();
+
+        inputMessages.clear();
+        outputMessages.clear();
     }
 
 }

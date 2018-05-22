@@ -170,7 +170,11 @@ public class Server implements Addressee {
                         .thenAcceptAsync(clientChannel::send, handleCommandExecutor);  // после получение результата асинхронно возвращаем его клиенту
                 }
             } else {
-                log.warn("От клиента получено сообщение необрабатываемог класса. Message: {}", message);
+                if (message instanceof PoisonPill) {
+                    log.warn("Сообщение об остановке клиента");
+                } else {
+                    log.warn("От клиента получено сообщение необрабатываемог класса. Message: {}", message);
+                }
             }
         }
     }

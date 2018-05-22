@@ -98,7 +98,7 @@ public class Client implements Addressee {
         // Блокируемся до установления соединения с сервером
         handshakeLatch.await();
 
-        testRun1();
+        //testRun1();
         testRun2();
 
         // пока у нас есть необработанные запросы, не останавливаем основной Thread клиента
@@ -143,9 +143,9 @@ public class Client implements Addressee {
 
         @Override
         public void run() {
-            for (int i = 0; i < 10; i++) {
+            for (int i = 0; i < 5; i++) {
                 try {
-                    client.remoteCall("DateService", "sleep", 1000L);
+                    client.remoteCall("DateService", "sleep", 500L);
                     log.info("Current Date is: {}",
                         client.remoteCall("DateService", "getCurrentDate"));
                 } catch (RemoteCallException e) {
@@ -165,6 +165,8 @@ public class Client implements Addressee {
                         connectAnswerHandler.handleMessage((ConnectAnswerMessage) serverMessage);
                     } else if (serverMessage instanceof MethodInvokeAnswerMessage) {
                         methodInvokeAnswerHandler.handleMessage((MethodInvokeAnswerMessage) serverMessage);
+                    } else if (serverMessage instanceof PoisonPill) {
+                        break;
                     } else {
                         log.warn("Получено сообщение необрабатываемого класса. Message: {}", serverMessage);
                     }
@@ -251,6 +253,11 @@ public class Client implements Addressee {
     private void close() {
         try {
             client.close();
+            try {
+                executor.awaitTermination(500L, TimeUnit.MILLISECONDS);
+            } catch (InterruptedException e) {
+                log.warn("Client executor shutdown");
+            }
             executor.shutdown();
         } catch (IOException e) {
             e.printStackTrace();
