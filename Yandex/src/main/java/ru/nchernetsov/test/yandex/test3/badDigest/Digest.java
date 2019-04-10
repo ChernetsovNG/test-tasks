@@ -7,6 +7,7 @@ import java.util.Map;
 public abstract class Digest {
 
     // неверный тип ключа (т.к. для byte[] не определён метод equals) => кеш не работает
+    // нет методов инвалидации кеша, проверки наличия значения в нём
     private Map<byte[], byte[]> cache = new HashMap<>();
 
     // метод non-final => мы можем его переопределить в наследнике
