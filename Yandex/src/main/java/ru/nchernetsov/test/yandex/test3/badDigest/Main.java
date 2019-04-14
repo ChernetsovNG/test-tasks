@@ -1,7 +1,5 @@
 package ru.nchernetsov.test.yandex.test3.badDigest;
 
-import ru.nchernetsov.test.yandex.test3.notSoBadDigest.DigestCache;
-
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
@@ -24,16 +22,16 @@ public class Main {
         List<Future<byte[]>> futures = executorService.invokeAll(callables);
 
         List<byte[]> results = futures.stream()
-                .map(future -> {
-                    try {
-                        return future.get();
-                    } catch (InterruptedException | ExecutionException e) {
-                        e.printStackTrace();
-                    }
-                    return null;
-                })
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
+            .map(future -> {
+                try {
+                    return future.get();
+                } catch (InterruptedException | ExecutionException e) {
+                    e.printStackTrace();
+                }
+                return null;
+            })
+            .filter(Objects::nonNull)
+            .collect(Collectors.toList());
 
         results.forEach(result -> System.out.println(Arrays.toString(result)));
 

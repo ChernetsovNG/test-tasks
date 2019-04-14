@@ -1,8 +1,5 @@
 package ru.nchernetsov.test.yandex.test3.notSoBadDigest;
 
-import ru.nchernetsov.test.yandex.test3.badDigest.Digest;
-
-import java.net.CacheRequest;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
@@ -26,20 +23,20 @@ public class Main {
         List<Future<byte[]>> futures = executorService.invokeAll(callables);
 
         List<byte[]> results = futures.stream()
-                .map(future -> {
-                    try {
-                        return future.get();
-                    } catch (InterruptedException | ExecutionException e) {
-                        e.printStackTrace();
-                    }
-                    return null;
-                })
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
+            .map(future -> {
+                try {
+                    return future.get();
+                } catch (InterruptedException | ExecutionException e) {
+                    e.printStackTrace();
+                }
+                return null;
+            })
+            .filter(Objects::nonNull)
+            .collect(Collectors.toList());
 
         results.forEach(result -> System.out.println(Arrays.toString(result)));
 
-        System.out.println("State of cache" );
+        System.out.println("State of cache");
         Map<ByteArrayKey, byte[]> cache = DigestCache.getInstance();
         cache.forEach((key, value) -> {
             System.out.printf("key = %s, value = %s\n", key, Arrays.toString(value));
