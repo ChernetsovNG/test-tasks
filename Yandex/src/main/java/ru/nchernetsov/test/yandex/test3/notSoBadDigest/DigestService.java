@@ -13,8 +13,11 @@ public class DigestService {
     public byte[] digest(byte[] input) {
         ByteArrayKey inputKey = new ByteArrayKey(input);
         Map<ByteArrayKey, byte[]> cache = DigestCache.getInstance();
-        byte[] result = digestWorkerService.doDigest(input);
-        cache.putIfAbsent(inputKey, result);
+        byte[] result = cache.get(inputKey);
+        if (result == null) {
+            result = digestWorkerService.doDigest(input);
+            cache.putIfAbsent(inputKey, result);
+        }
         return result;
     }
 }

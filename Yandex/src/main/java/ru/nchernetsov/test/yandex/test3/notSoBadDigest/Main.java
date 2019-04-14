@@ -14,13 +14,13 @@ public class Main {
         ExecutorService executorService = Executors.newFixedThreadPool(availableProcessors - 2);
 
         DigestWorkerService digestWorkerService = new ConcreteDigestSum();
-        DigestService digest = new DigestService(digestWorkerService);
+        DigestService digestService = new DigestService(digestWorkerService);
 
         List<Callable<byte[]>> callables = new ArrayList<>();
 
         for (int i = 0; i < 5; i++) {
             final byte[] input = {1, 2, 3, 4, 5};
-            callables.add(() -> digest.digest(input));
+            callables.add(() -> digestService.digest(input));
         }
 
         List<Future<byte[]>> futures = executorService.invokeAll(callables);
