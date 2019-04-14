@@ -1,6 +1,6 @@
 package ru.nchernetsov.test.yandex.test3.badDigest;
 
-public class ConcreteDigest extends Digest {
+public class ConcreteDigestSum extends Digest {
 
     @Override
     protected byte[] doDigest(byte[] input) {

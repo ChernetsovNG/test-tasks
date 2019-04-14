@@ -1,7 +1,8 @@
-package ru.nchernetsov.test.yandex.test3.badDigest;
+package ru.nchernetsov.test.yandex.test3.notSoBadDigest;
 
-import ru.nchernetsov.test.yandex.test3.notSoBadDigest.DigestCache;
+import ru.nchernetsov.test.yandex.test3.badDigest.Digest;
 
+import java.net.CacheRequest;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
@@ -12,7 +13,8 @@ public class Main {
         int availableProcessors = Runtime.getRuntime().availableProcessors();
         ExecutorService executorService = Executors.newFixedThreadPool(availableProcessors - 2);
 
-        ConcreteDigestSum digest = new ConcreteDigestSum();
+        DigestWorkerService digestWorkerService = new ConcreteDigestSum();
+        DigestService digest = new DigestService(digestWorkerService);
 
         List<Callable<byte[]>> callables = new ArrayList<>();
 
@@ -37,10 +39,10 @@ public class Main {
 
         results.forEach(result -> System.out.println(Arrays.toString(result)));
 
-        System.out.println("State of cache");
-        Map<byte[], byte[]> cache = digest.getCache();
+        System.out.println("State of cache" );
+        Map<ByteArrayKey, byte[]> cache = DigestCache.getInstance();
         cache.forEach((key, value) -> {
-            System.out.printf("key = %s, value = %s\n", Arrays.toString(key), Arrays.toString(value));
+            System.out.printf("key = %s, value = %s\n", key, Arrays.toString(value));
         });
 
         executorService.shutdown();

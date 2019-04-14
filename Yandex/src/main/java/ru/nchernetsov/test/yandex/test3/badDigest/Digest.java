@@ -1,5 +1,6 @@
 package ru.nchernetsov.test.yandex.test3.badDigest;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -32,4 +33,9 @@ public abstract class Digest {
     // В этом смысле наследование не очень хорошо использовать, лучше применять
     // агрегацию (композицию)
     protected abstract byte[] doDigest(byte[] input);
+
+    // просмотр состояния кеша
+    public synchronized Map<byte[], byte[]> getCache() {
+        return Collections.unmodifiableMap(cache);
+    }
 }
