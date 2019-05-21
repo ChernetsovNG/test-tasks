@@ -9,5 +9,4 @@ public class LiptTestApplication {
     public static void main(String[] args) {
         SpringApplication.run(LiptTestApplication.class, args);
     }
-
 }

@@ -26,4 +26,8 @@ dependencies {
     annotationProcessor 'org.projectlombok:lombok'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'io.projectreactor:reactor-test'
+
+    compile('org.camunda.bpm.springboot:camunda-bpm-spring-boot-starter-webapp:3.2.1')
+    compile('ru.redcom.lib:dadata-api-client:0.0.1')
+    compile('org.springframework.boot:spring-boot-starter-json:2.1.5.RELEASE')
 }

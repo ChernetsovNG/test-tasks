@@ -1,0 +1,7 @@
+server:
+  address: localhost
+  port: 8080
+
+dadata:
+  apiKey: 9e11086c26332211c5452a5ee0c9e7bc77e6e5fb
+  secretKey: f57bf298a34b3f77d9337c43800b9e4a3f925e6e
