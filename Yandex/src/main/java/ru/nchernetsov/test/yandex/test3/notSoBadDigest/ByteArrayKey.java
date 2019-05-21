@@ -7,7 +7,7 @@ public class ByteArrayKey {
     private final byte[] key;
 
     public ByteArrayKey(byte[] key) {
-        this.key = key;
+        this.key = Arrays.copyOf(key, key.length);
     }
 
     @Override
