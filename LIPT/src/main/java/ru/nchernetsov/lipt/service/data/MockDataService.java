@@ -1,9 +1,7 @@
-package ru.nchernetsov.lipt.service.impl;
+package ru.nchernetsov.lipt.service.data;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import ru.nchernetsov.lipt.service.DataService;
-import ru.nchernetsov.lipt.service.GeoPoint;
 
 @Slf4j
 @Service

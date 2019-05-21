@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_1fvyb1x" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="3.1.0">
+  <bpmn:process id="get_coordinates_process" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1" name="Start Process">
+      <bpmn:outgoing>SequenceFlow_0cjfyjr</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="SequenceFlow_0cjfyjr" sourceRef="StartEvent_1" targetRef="task_input_address" />
+    <bpmn:userTask id="task_input_address" name="User Input Address">
+      <bpmn:extensionElements>
+        <camunda:formData>
+          <camunda:formField id="FormField_Address" label="Input Address" type="string" defaultValue="спб невский 17" />
+        </camunda:formData>
+        <camunda:taskListener class="ru.nchernetsov.lipt.service.camunda.UserInputTaskListener" event="complete" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>SequenceFlow_0cjfyjr</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_03enl13</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:sequenceFlow id="SequenceFlow_03enl13" sourceRef="task_input_address" targetRef="task_output_coordinates" />
+    <bpmn:userTask id="task_output_coordinates" name="Output Geo Coordinates">
+      <bpmn:extensionElements>
+        <camunda:inputOutput>
+          <camunda:outputParameter name="output_coordinates" />
+        </camunda:inputOutput>
+        <camunda:formData>
+          <camunda:formField id="FormField_Coords" type="string" />
+        </camunda:formData>
+      </bpmn:extensionElements>
+      <bpmn:incoming>SequenceFlow_03enl13</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_1dpfmsl</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:endEvent id="EndEvent_1" name="End Process">
+      <bpmn:incoming>SequenceFlow_1dpfmsl</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="SequenceFlow_1dpfmsl" sourceRef="task_output_coordinates" targetRef="EndEvent_1" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="get_coordinates_process">
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
+        <dc:Bounds x="179" y="103" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="164" y="146" width="67" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_0cjfyjr_di" bpmnElement="SequenceFlow_0cjfyjr">
+        <di:waypoint x="215" y="121" />
+        <di:waypoint x="265" y="121" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="UserTask_1niv5cp_di" bpmnElement="task_input_address">
+        <dc:Bounds x="265" y="81" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_03enl13_di" bpmnElement="SequenceFlow_03enl13">
+        <di:waypoint x="365" y="121" />
+        <di:waypoint x="415" y="121" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="UserTask_0v3llea_di" bpmnElement="task_output_coordinates">
+        <dc:Bounds x="415" y="81" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_1ft5zo3_di" bpmnElement="EndEvent_1">
+        <dc:Bounds x="565" y="103" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="552" y="146" width="63" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_1dpfmsl_di" bpmnElement="SequenceFlow_1dpfmsl">
+        <di:waypoint x="515" y="121" />
+        <di:waypoint x="565" y="121" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

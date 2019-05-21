@@ -1,4 +1,4 @@
-package ru.nchernetsov.lipt.service;
+package ru.nchernetsov.lipt.service.data;
 
 import java.util.Objects;
 
