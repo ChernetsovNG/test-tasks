@@ -15,21 +15,33 @@ configurations {
     }
 }
 
+bootJar {
+    launchScript()
+    mainClassName = 'ru.nchernetsov.lipt.LiptTestApplication'
+}
+
 repositories {
     mavenCentral()
 }
 
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-cache'
 
     compile('org.camunda.bpm.springboot:camunda-bpm-spring-boot-starter-webapp:3.2.1')
     compile('ru.redcom.lib:dadata-api-client:0.0.1')
     compile('org.springframework.boot:spring-boot-starter-json:2.1.5.RELEASE')
+    compile('com.github.ben-manes.caffeine:caffeine:2.7.0')
 
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
 
     runtimeOnly 'com.h2database:h2'
 
-    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation('org.springframework.boot:spring-boot-starter-test') {
+        exclude group: 'junit', module: 'junit'
+    }
+    testCompile('org.junit.jupiter:junit-jupiter:5.4.2')
+    testCompile('org.mockito:mockito-core:2.27.0')
+    testCompile('org.mockito:mockito-junit-jupiter:2.27.0')
 }

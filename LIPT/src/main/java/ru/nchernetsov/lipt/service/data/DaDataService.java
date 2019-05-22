@@ -2,6 +2,8 @@ package ru.nchernetsov.lipt.service.data;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import ru.nchernetsov.lipt.config.DaDataConfig;
 import ru.redcom.lib.integration.api.client.dadata.DaDataClient;
@@ -10,6 +12,7 @@ import ru.redcom.lib.integration.api.client.dadata.dto.Address;
 
 @Slf4j
 @Service
+@CacheConfig(cacheNames = {"address"})
 public class DaDataService implements DataService {
 
     private final DaDataClient daDataClient;
@@ -22,14 +25,16 @@ public class DaDataService implements DataService {
 
     @Override
     public GeoPoint getAddressCoords(String addressStr) {
-        Address address = daDataClient.cleanAddress(addressStr);
-
-        String city = address.getCity();
-        String house = address.getHouse();
+        Address address = getAddress(addressStr);
 
         Double geoLat = address.getGeoLat();
         Double geoLon = address.getGeoLon();
 
         return GeoPoint.of(geoLat, geoLon);
+    }
+
+    @Cacheable
+    public Address getAddress(String addressStr) {
+        return daDataClient.cleanAddress(addressStr);
     }
 }

@@ -10,7 +10,7 @@
         <camunda:formData>
           <camunda:formField id="FormField_Address" label="Input Address" type="string" defaultValue="спб невский 17" />
         </camunda:formData>
-        <camunda:taskListener class="ru.nchernetsov.lipt.service.camunda.UserInputTaskListener" event="complete" />
+        <camunda:executionListener class="ru.nchernetsov.lipt.service.camunda.UserInputTaskDelegate" event="end" />
       </bpmn:extensionElements>
       <bpmn:incoming>SequenceFlow_0cjfyjr</bpmn:incoming>
       <bpmn:outgoing>SequenceFlow_03enl13</bpmn:outgoing>
@@ -22,7 +22,8 @@
           <camunda:outputParameter name="output_coordinates" />
         </camunda:inputOutput>
         <camunda:formData>
-          <camunda:formField id="FormField_Coords" type="string" />
+          <camunda:formField id="FormField_UserInput" label="Введённый адрес:" type="string" />
+          <camunda:formField id="FormField_Coords" label="Координаты введённого адреса:" type="string" />
         </camunda:formData>
       </bpmn:extensionElements>
       <bpmn:incoming>SequenceFlow_03enl13</bpmn:incoming>

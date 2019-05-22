@@ -14,3 +14,8 @@ camunda.bpm:
     lastName: Chernetsov
   filter:
     create: All tasks
+
+spring:
+  cache:
+    caffeine:
+      spec: maximumSize=1000, expireAfterAccess=1800s
