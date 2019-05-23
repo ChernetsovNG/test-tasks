@@ -21,19 +21,19 @@ class DataServiceTest {
 
     @BeforeEach
     void setUp() {
-        given(dataService.getAddressCoords(eq("Москва")))
-                .willReturn(GeoPoint.of(10.0, 15.0));
+        given(dataService.getAddressGeoPoint(eq("Москва")))
+                .willReturn(GeoPoint.of("Москва", 10.0, 15.0));
 
-        given(dataService.getAddressCoords(eq("Санкт-Петербург")))
-                .willReturn(GeoPoint.of(30.0, 35.0));
+        given(dataService.getAddressGeoPoint(eq("Санкт-Петербург")))
+                .willReturn(GeoPoint.of("Санкт-Петербург", 30.0, 35.0));
 
-        given(dataService.getAddressCoords(eq("Киев")))
-                .willReturn(GeoPoint.of(40.0, 45.0));
+        given(dataService.getAddressGeoPoint(eq("Киев")))
+                .willReturn(GeoPoint.of("Киев", 40.0, 45.0));
     }
 
     @Test
     void getAddressCoordsTest1() {
-        GeoPoint addressCoords = dataService.getAddressCoords("Москва");
+        GeoPoint addressCoords = dataService.getAddressGeoPoint("Москва");
         assertThat(addressCoords.getLat()).isEqualTo(10.0, Offset.offset(1e-6));
         assertThat(addressCoords.getLon()).isEqualTo(15.0, Offset.offset(1e-6));
     }

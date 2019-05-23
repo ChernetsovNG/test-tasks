@@ -19,11 +19,11 @@ class MockDataServiceTest {
 
     @Test
     void cacheShouldReturnSameValueForOneInputTest() {
-        GeoPoint addressCoords = dataService.getAddressCoords("address #1");
+        GeoPoint addressCoords = dataService.getAddressGeoPoint("address #1");
         // Несколько раз снова получаем координаты для того же адреса. Они должны быть
         // взяты из кеша, и поэтому должны быть такими же
-        assertThat(dataService.getAddressCoords("address #1")).isEqualTo(addressCoords);
-        assertThat(dataService.getAddressCoords("address #1")).isEqualTo(addressCoords);
-        assertThat(dataService.getAddressCoords("address #1")).isEqualTo(addressCoords);
+        assertThat(dataService.getAddressGeoPoint("address #1")).isEqualTo(addressCoords);
+        assertThat(dataService.getAddressGeoPoint("address #1")).isEqualTo(addressCoords);
+        assertThat(dataService.getAddressGeoPoint("address #1")).isEqualTo(addressCoords);
     }
 }

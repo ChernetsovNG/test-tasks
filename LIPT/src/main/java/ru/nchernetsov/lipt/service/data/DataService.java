@@ -8,13 +8,5 @@ public interface DataService {
      * @param addressStr адрес в достаточно произвольной форме
      * @return географические координаты
      */
-    GeoPoint getAddressCoords(String addressStr);
-
-    /**
-     * Получить "очищенный" адрес
-     *
-     * @param addressStr адрес в достаточно произвольной форме
-     * @return "очищенный" адрес
-     */
-    String getCleanAddress(String addressStr);
+    GeoPoint getAddressGeoPoint(String addressStr);
 }

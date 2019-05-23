@@ -5,6 +5,11 @@ import java.util.Objects;
 public class GeoPoint {
 
     /**
+     * "Очищенный" адрес
+     */
+    private final String cleanAddress;
+
+    /**
      * Географическая широта, десятичные градусы
      */
     private final double lat;
@@ -14,13 +19,18 @@ public class GeoPoint {
      */
     private final double lon;
 
-    private GeoPoint(double lat, double lon) {
+    private GeoPoint(String cleanAddress, double lat, double lon) {
+        this.cleanAddress = cleanAddress;
         this.lat = lat;
         this.lon = lon;
     }
 
-    public static GeoPoint of(double lat, double lon) {
-        return new GeoPoint(lat, lon);
+    public static GeoPoint of(String cleanAddress, double lat, double lon) {
+        return new GeoPoint(cleanAddress, lat, lon);
+    }
+
+    public String getCleanAddress() {
+        return cleanAddress;
     }
 
     public double getLat() {
@@ -37,20 +47,13 @@ public class GeoPoint {
         if (o == null || getClass() != o.getClass()) return false;
         GeoPoint geoPoint = (GeoPoint) o;
         return Double.compare(geoPoint.lat, lat) == 0 &&
-                Double.compare(geoPoint.lon, lon) == 0;
+                Double.compare(geoPoint.lon, lon) == 0 &&
+                Objects.equals(cleanAddress, geoPoint.cleanAddress);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(lat, lon);
-    }
-
-    @Override
-    public String toString() {
-        return "GeoPoint{" +
-                "lat=" + lat +
-                ", lon=" + lon +
-                '}';
+        return Objects.hash(cleanAddress, lat, lon);
     }
 
     public String toText() {

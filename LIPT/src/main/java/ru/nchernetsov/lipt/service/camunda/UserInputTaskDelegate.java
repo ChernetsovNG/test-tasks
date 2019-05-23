@@ -23,10 +23,9 @@ public class UserInputTaskDelegate implements JavaDelegate {
     @Override
     public void execute(DelegateExecution execution) {
         String userInputAddress = (String) execution.getVariable("FormField_Address");
-        String cleanAddress = dataService.getCleanAddress(userInputAddress);
-        GeoPoint coords = dataService.getAddressCoords(userInputAddress);
+        GeoPoint geoPoint = dataService.getAddressGeoPoint(userInputAddress);
         execution.setVariable("FormField_UserInput", userInputAddress);
-        execution.setVariable("FormField_Coords", coords.toText());
-        execution.setVariable("FormField_Address", cleanAddress);
+        execution.setVariable("FormField_Coords", geoPoint.toText());
+        execution.setVariable("FormField_Address", geoPoint.getCleanAddress());
     }
 }

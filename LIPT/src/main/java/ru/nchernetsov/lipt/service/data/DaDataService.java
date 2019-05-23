@@ -22,23 +22,18 @@ public class DaDataService implements DataService {
     }
 
     @Override
-    public GeoPoint getAddressCoords(String addressStr) {
+    @Cacheable(cacheNames = {"address"})
+    public GeoPoint getAddressGeoPoint(String addressStr) {
         Address address = getAddress(addressStr);
 
+        String cleanAddress = address.getResult();
         Double geoLat = address.getGeoLat();
         Double geoLon = address.getGeoLon();
 
-        return GeoPoint.of(geoLat, geoLon);
+        return GeoPoint.of(cleanAddress, geoLat, geoLon);
     }
 
-    @Override
-    public String getCleanAddress(String addressStr) {
-        Address address = getAddress(addressStr);
-        return address.getResult();
-    }
-
-    @Cacheable(cacheNames = {"address"})
-    public Address getAddress(String addressStr) {
+    private Address getAddress(String addressStr) {
         return daDataClient.cleanAddress(addressStr);
     }
 }
