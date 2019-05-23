@@ -13,10 +13,15 @@ public class MockDataService implements DataService {
 
     @Override
     @Cacheable(cacheNames = {"address"})
-    public GeoPoint getAddressCoords(String address) {
+    public GeoPoint getAddressCoords(String addressStr) {
         Random random = ThreadLocalRandom.current();
         double lat = -90.0 + random.nextDouble() * 180.0;
         double lon = -180.0 + random.nextDouble() * 360.0;
         return GeoPoint.of(lat, lon);
+    }
+
+    @Override
+    public String getCleanAddress(String addressStr) {
+        return addressStr;
     }
 }

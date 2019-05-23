@@ -24,6 +24,7 @@
         <camunda:formData>
           <camunda:formField id="FormField_UserInput" label="Введённый адрес:" type="string" />
           <camunda:formField id="FormField_Coords" label="Координаты введённого адреса:" type="string" />
+          <camunda:formField id="FormField_Address" label="&#34;Очищенный&#34; адрес:" type="string" />
         </camunda:formData>
       </bpmn:extensionElements>
       <bpmn:incoming>SequenceFlow_03enl13</bpmn:incoming>

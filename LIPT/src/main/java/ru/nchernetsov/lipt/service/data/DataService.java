@@ -5,8 +5,16 @@ public interface DataService {
     /**
      * Получить географические координаты заданного адреса (например, "спб невский 17")
      *
-     * @param address адрес в достаточно произвольной форме
+     * @param addressStr адрес в достаточно произвольной форме
      * @return географические координаты
      */
-    GeoPoint getAddressCoords(String address);
+    GeoPoint getAddressCoords(String addressStr);
+
+    /**
+     * Получить "очищенный" адрес
+     *
+     * @param addressStr адрес в достаточно произвольной форме
+     * @return "очищенный" адрес
+     */
+    String getCleanAddress(String addressStr);
 }

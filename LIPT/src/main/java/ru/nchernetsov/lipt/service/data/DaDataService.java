@@ -31,6 +31,12 @@ public class DaDataService implements DataService {
         return GeoPoint.of(geoLat, geoLon);
     }
 
+    @Override
+    public String getCleanAddress(String addressStr) {
+        Address address = getAddress(addressStr);
+        return address.getResult();
+    }
+
     @Cacheable(cacheNames = {"address"})
     public Address getAddress(String addressStr) {
         return daDataClient.cleanAddress(addressStr);

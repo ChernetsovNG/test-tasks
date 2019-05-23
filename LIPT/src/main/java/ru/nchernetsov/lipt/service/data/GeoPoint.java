@@ -54,6 +54,6 @@ public class GeoPoint {
     }
 
     public String toText() {
-        return String.format("Широта: %.2f, долгота: %.2f", lat, lat);
+        return String.format("Широта: %.2f, долгота: %.2f", lat, lon);
     }
 }

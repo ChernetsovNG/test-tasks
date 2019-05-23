@@ -16,15 +16,17 @@ public class UserInputTaskDelegate implements JavaDelegate {
 
     private final DataService dataService;
 
-    public UserInputTaskDelegate(@Qualifier("mockDataService") DataService dataService) {
+    public UserInputTaskDelegate(@Qualifier("daDataService") DataService dataService) {
         this.dataService = dataService;
     }
 
     @Override
     public void execute(DelegateExecution execution) {
         String userInputAddress = (String) execution.getVariable("FormField_Address");
+        String cleanAddress = dataService.getCleanAddress(userInputAddress);
         GeoPoint coords = dataService.getAddressCoords(userInputAddress);
         execution.setVariable("FormField_UserInput", userInputAddress);
         execution.setVariable("FormField_Coords", coords.toText());
+        execution.setVariable("FormField_Address", cleanAddress);
     }
 }
