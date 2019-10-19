@@ -1,17 +1,14 @@
 package ru.nchernetsov;
 
-public class Element<T> {
+public class Element {
 
     private final int x;
 
     private final int y;
 
-    private final T value;
-
-    public Element(int x, int y, T value) {
+    public Element(int x, int y) {
         this.x = x;
         this.y = y;
-        this.value = value;
     }
 
     public int getX() {
@@ -22,7 +19,21 @@ public class Element<T> {
         return y;
     }
 
-    public T getValue() {
-        return value;
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Element element = (Element) o;
+
+        if (x != element.x) return false;
+        return y == element.y;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = x;
+        result = 31 * result + y;
+        return result;
     }
 }
