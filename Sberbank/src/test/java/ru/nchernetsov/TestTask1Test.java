@@ -109,4 +109,21 @@ public class TestTask1Test {
         assertThat(neighboringElements.get(3)).isEqualTo(new Element(1, 2));
         assertThat(neighboringElements.get(4)).isEqualTo(new Element(2, 2));
     }
+
+    @Test
+    public void elementShouldReturnItNeighboursTest4() {
+        // массив 2 х 3
+        Element[][] matrix = {
+                {new Element(0, 0), new Element(1, 0), new Element(2, 0)},
+                {new Element(0, 1), new Element(1, 1), new Element(2, 1)}};
+
+        List<Element> neighboringElements = getNeighboringElements(matrix, new Element(1, 1));
+
+        assertThat(neighboringElements).hasSize(5);
+        assertThat(neighboringElements.get(0)).isEqualTo(new Element(0, 0));
+        assertThat(neighboringElements.get(1)).isEqualTo(new Element(1, 0));
+        assertThat(neighboringElements.get(2)).isEqualTo(new Element(2, 0));
+        assertThat(neighboringElements.get(3)).isEqualTo(new Element(0, 1));
+        assertThat(neighboringElements.get(4)).isEqualTo(new Element(2, 1));
+    }
 }

@@ -2,8 +2,14 @@ package ru.nchernetsov;
 
 public class Element {
 
+    /**
+     * координата столбца элемента в массиве, считая от 0 слева-направо
+     */
     private final int x;
 
+    /**
+     * координата строки элементв в массиве, считая от 0 сверху-вниз
+     */
     private final int y;
 
     public Element(int x, int y) {
@@ -11,11 +17,11 @@ public class Element {
         this.y = y;
     }
 
-    public int getX() {
+    int getX() {
         return x;
     }
 
-    public int getY() {
+    int getY() {
         return y;
     }
 
