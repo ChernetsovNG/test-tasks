@@ -1,4 +1,4 @@
-package ru.nchernetsov;
+package ru.nchernetsov.test.sberbank;
 
 import java.util.ArrayList;
 import java.util.Collections;

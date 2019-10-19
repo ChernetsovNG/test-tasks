@@ -1,11 +1,11 @@
-package ru.nchernetsov;
+package ru.nchernetsov.test.sberbank;
 
 import org.junit.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static ru.nchernetsov.TestTask1.getNeighboringElements;
+import static ru.nchernetsov.test.sberbank.TestTask1.getNeighboringElements;
 
 public class TestTask1Test {
 
