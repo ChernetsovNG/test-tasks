@@ -32,7 +32,7 @@ public class TestTask1 {
             return Collections.emptyList();
         }
 
-        // если элемент за границами массива
+        // если элемент за границами массива, то соседей нет
         if (!isInArray(n, m, x, y)) {
             return Collections.emptyList();
         }
