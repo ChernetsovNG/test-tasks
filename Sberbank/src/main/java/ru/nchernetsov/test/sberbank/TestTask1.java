@@ -19,8 +19,9 @@ public class TestTask1 {
             throw new IllegalArgumentException("element is null");
         }
         if (arr == null) {
-            return Collections.emptyList();
+            throw new IllegalArgumentException("arr is null");
         }
+
         int x = element.getX();
         int y = element.getY();
 

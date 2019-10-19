@@ -59,6 +59,12 @@ public class TestTask1Test {
         getNeighboringElements(matrix, null);
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void nullArrayShouldThrowException() {
+        Element[][] matrix = null;
+        getNeighboringElements(matrix, new Element(1, 1));
+    }
+
     @Test
     public void elementShouldReturnItNeighboursTest1() {
         Element[][] matrix = {
