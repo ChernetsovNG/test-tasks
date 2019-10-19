@@ -25,6 +25,10 @@ public class TestTask1 {
         int y = element.getY();
 
         int n = arr.length;
+        // если массив пустой, то соседей нет
+        if (n == 0) {
+            return Collections.emptyList();
+        }
         int m = arr[0].length;
 
         // если массив единичного размера, то соседей нет

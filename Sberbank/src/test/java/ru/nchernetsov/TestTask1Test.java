@@ -126,4 +126,11 @@ public class TestTask1Test {
         assertThat(neighboringElements.get(3)).isEqualTo(new Element(0, 1));
         assertThat(neighboringElements.get(4)).isEqualTo(new Element(2, 1));
     }
+
+    @Test
+    public void emptyMatrixShouldReturnEmptyList() {
+        Element[][] matrix = {};
+        List<Element> neighboringElements = getNeighboringElements(matrix, new Element(0, 0));
+        assertThat(neighboringElements).isEmpty();
+    }
 }
