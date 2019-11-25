@@ -1,5 +1,8 @@
 package ru.nchernetsov.test.pixonic;
 
+import java.util.List;
+import java.util.UUID;
+
 public interface TaskManager extends Publisher {
 
     /**
@@ -9,4 +12,9 @@ public interface TaskManager extends Publisher {
      * @param <V>  тип результата
      */
     <V> void scheduleTask(Task<V> task);
+
+    /**
+     * Получить список запланированных задач в порядке планирования
+     */
+    List<UUID> getScheduledTasksList();
 }

@@ -1,7 +1,9 @@
-package ru.nchernetsov.test.pixonic;
+package ru.nchernetsov.test.pixonic.client;
 
 import org.junit.Test;
-import ru.nchernetsov.test.pixonic.client.SimpleClient;
+import ru.nchernetsov.test.pixonic.Task;
+import ru.nchernetsov.test.pixonic.TaskManager;
+import ru.nchernetsov.test.pixonic.TaskManagerImpl;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
