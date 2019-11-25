@@ -4,7 +4,7 @@ import org.junit.Test;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.List;
+import java.util.Queue;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -33,12 +33,12 @@ public class TaskManagerTest {
 
         // После планирования задачи должны быть упорядочены таким образом, чтобы в конце списка
         // была задача, которая должна быть выполнена первой
-        List<UUID> scheduledTasksList = taskManager.getScheduledTasksList();
+        Queue<UUID> scheduledTasks = taskManager.getScheduledTasks();
 
-        assertThat(scheduledTasksList).hasSize(3);
-        assertThat(scheduledTasksList.get(0)).isEqualTo(task3Uuid);
-        assertThat(scheduledTasksList.get(1)).isEqualTo(task2Uuid);
-        assertThat(scheduledTasksList.get(2)).isEqualTo(task1Uuid);
+        assertThat(scheduledTasks).hasSize(3);
+        assertThat(scheduledTasks.poll()).isEqualTo(task1Uuid);
+        assertThat(scheduledTasks.poll()).isEqualTo(task2Uuid);
+        assertThat(scheduledTasks.poll()).isEqualTo(task3Uuid);
     }
 
     @Test
@@ -70,13 +70,13 @@ public class TaskManagerTest {
         // После планирования задачи должны быть упорядочены таким образом, чтобы в конце списка
         // была задача, которая должна быть выполнена первой. Из одинаковых по времени задач первой должна выполниться
         // задача, которая была первой добавлена
-        List<UUID> scheduledTasksList = taskManager.getScheduledTasksList();
+        Queue<UUID> scheduledTasks = taskManager.getScheduledTasks();
 
-        assertThat(scheduledTasksList).hasSize(5);
-        assertThat(scheduledTasksList.get(0)).isEqualTo(task33Uuid);
-        assertThat(scheduledTasksList.get(1)).isEqualTo(task32Uuid);
-        assertThat(scheduledTasksList.get(2)).isEqualTo(task31Uuid);
-        assertThat(scheduledTasksList.get(3)).isEqualTo(task2Uuid);
-        assertThat(scheduledTasksList.get(4)).isEqualTo(task1Uuid);
+        assertThat(scheduledTasks).hasSize(5);
+        assertThat(scheduledTasks.poll()).isEqualTo(task1Uuid);
+        assertThat(scheduledTasks.poll()).isEqualTo(task2Uuid);
+        assertThat(scheduledTasks.poll()).isEqualTo(task31Uuid);
+        assertThat(scheduledTasks.poll()).isEqualTo(task32Uuid);
+        assertThat(scheduledTasks.poll()).isEqualTo(task33Uuid);
     }
 }
