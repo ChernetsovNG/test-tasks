@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Queue;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -78,5 +79,42 @@ public class TaskManagerTest {
         assertThat(scheduledTasks.poll()).isEqualTo(task31Uuid);
         assertThat(scheduledTasks.poll()).isEqualTo(task32Uuid);
         assertThat(scheduledTasks.poll()).isEqualTo(task33Uuid);
+    }
+
+    @Test
+    public void tasksShouldBeCompletedByTimeOrder() {
+        TaskManagerImpl taskManager = new TaskManagerImpl();
+
+        // добавляем задачи в неправильном порядке по времени
+        UUID clientUUID = UUID.randomUUID();
+
+        LocalDateTime now = LocalDateTime.now();
+        Task<Integer> task1 = new Task<>(clientUUID, now.plus(100L, ChronoUnit.MILLIS), () -> 100);
+        Task<Integer> task2 = new Task<>(clientUUID, now.plus(200L, ChronoUnit.MILLIS), () -> 200);
+        Task<Integer> task3 = new Task<>(clientUUID, now.plus(300L, ChronoUnit.MILLIS), () -> 300);
+
+        taskManager.scheduleTask(task1);
+        taskManager.scheduleTask(task2);
+        taskManager.scheduleTask(task3);
+
+        // запускаем исполнение задач
+        taskManager.startExecutionLoop();
+
+        try {
+            TimeUnit.MILLISECONDS.sleep(350);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+
+        // проверяем, что задачи выполнены в нужном порядке
+        Queue<Object> results = taskManager.getResults();
+
+        assertThat(results).hasSize(3);
+        assertThat(results.poll()).isEqualTo(100);
+        assertThat(results.poll()).isEqualTo(200);
+        assertThat(results.poll()).isEqualTo(300);
+
+        // останавливаем цикл выполнения задач
+        taskManager.scheduleTask(new PoisonPillTask());
     }
 }

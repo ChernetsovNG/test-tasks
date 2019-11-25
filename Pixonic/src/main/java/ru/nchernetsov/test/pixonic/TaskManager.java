@@ -14,7 +14,12 @@ public interface TaskManager extends Publisher {
     <V> void scheduleTask(Task<V> task);
 
     /**
-     * Получить список запланированных задач в порядке планирования
+     * Получить список запланированных задач (в порядке планирования)
      */
     Queue<UUID> getScheduledTasks();
+
+    /**
+     * Получить очередь результатов выполнения задач (в порядке выполнения)
+     */
+    Queue<Object> getResults();
 }
