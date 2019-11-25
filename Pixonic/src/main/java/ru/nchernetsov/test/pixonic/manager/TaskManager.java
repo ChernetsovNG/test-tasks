@@ -15,7 +15,7 @@ public interface TaskManager extends Publisher {
      * @param task задача для выполнения
      * @param <V>  тип результата
      */
-    <V> void scheduleTask(Task<V> task);
+    <V> boolean scheduleTask(Task<V> task);
 
     /**
      * Получить список запланированных задач (в порядке планирования)

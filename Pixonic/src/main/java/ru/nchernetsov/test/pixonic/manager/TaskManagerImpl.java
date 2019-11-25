@@ -17,6 +17,12 @@ public class TaskManagerImpl implements TaskManager {
 
     private static final int EXECUTORS_COUNT = Runtime.getRuntime().availableProcessors();
 
+    /**
+     * Максимальный размер очереди задач (т.к. очередь PriorityBlockingQueue растёт неограниченно,
+     * то мы её ограничим принудительно, чтобы не исчерпалась память)
+     */
+    private final int tasksMaxCount;
+
     private static final Logger log = LoggerFactory.getLogger(TaskManager.class);
 
     /**
@@ -25,12 +31,12 @@ public class TaskManagerImpl implements TaskManager {
      * задачи должны выполняться в порядке согласно значению LocalDateTime
      * либо в порядке прихода события для равных LocalDateTime
      */
-    private final BlockingQueue<Task> tasksQueue = new PriorityBlockingQueue<>(100, Comparator.comparing(Task::getTime));
+    private final BlockingQueue<Task> tasksQueue;
 
     /**
      * Очередь результатов выполненных задач
      */
-    private final BlockingQueue<Result<Object>> resultQueue = new ArrayBlockingQueue<>(100);
+    private final BlockingQueue<Result<Object>> resultQueue;
 
     /**
      * Для каждой задачи сохраняем id клиента, от которого она пришла
@@ -44,6 +50,16 @@ public class TaskManagerImpl implements TaskManager {
 
     private final ExecutorService executorService = Executors.newFixedThreadPool(EXECUTORS_COUNT);
 
+    public TaskManagerImpl() {
+        this(100, 1000);
+    }
+
+    public TaskManagerImpl(int capacity, int tasksMaxCount) {
+        tasksQueue = new PriorityBlockingQueue<>(capacity, Comparator.comparing(Task::getTime));
+        resultQueue = new ArrayBlockingQueue<>(capacity);
+        this.tasksMaxCount = tasksMaxCount;
+    }
+
     @Override
     public void start() {
         startExecutionLoop();
@@ -51,11 +67,14 @@ public class TaskManagerImpl implements TaskManager {
     }
 
     @Override
-    public <V> void scheduleTask(Task<V> task) {
+    public <V> boolean scheduleTask(Task<V> task) {
         UUID taskUuid = task.getUuid();
         UUID clientUuid = task.getClientUuid();
         taskClientMap.put(taskUuid, clientUuid);
-        tasksQueue.offer(task);
+        if (tasksQueue.size() >= tasksMaxCount) {
+            return false;
+        }
+        return tasksQueue.offer(task);
     }
 
     @Override

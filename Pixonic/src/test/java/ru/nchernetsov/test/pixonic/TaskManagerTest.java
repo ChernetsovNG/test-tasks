@@ -8,9 +8,12 @@ import ru.nchernetsov.test.pixonic.task.Task;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.Queue;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -120,5 +123,43 @@ public class TaskManagerTest {
 
         // останавливаем цикл выполнения задач
         taskManager.scheduleTask(new PoisonPillTask());
+    }
+
+    @Test
+    public void normalTaskCountShouldBeAllScheduled() {
+        TaskManager taskManager = new TaskManagerImpl(10, 10);
+        UUID clientUuid = UUID.randomUUID();
+        LocalDateTime now = LocalDateTime.now();
+
+        // планируем на выполнение 10 задач => все они должны успешно запланироваться
+        List<Boolean> scheduleResult = IntStream.iterate(0, i -> ++i)
+                .limit(10)
+                .mapToObj(i -> {
+                    Task<Void> task = new Task<>(clientUuid, now, () -> null);
+                    return taskManager.scheduleTask(task);
+                })
+                .collect(Collectors.toList());
+
+        assertThat(scheduleResult).hasSize(10);
+        assertThat(scheduleResult).containsOnly(true);
+    }
+
+    @Test
+    public void tooMuchTaskCountShouldNotBeAllScheduled() {
+        TaskManager taskManager = new TaskManagerImpl(10, 10);
+        UUID clientUuid = UUID.randomUUID();
+        LocalDateTime now = LocalDateTime.now();
+
+        // планируем на выполнение 100 задач => не все они должны успешно запланироваться
+        List<Boolean> scheduleResult = IntStream.iterate(0, i -> ++i)
+                .limit(100)
+                .mapToObj(i -> {
+                    Task<Void> task = new Task<>(clientUuid, now, () -> null);
+                    return taskManager.scheduleTask(task);
+                })
+                .collect(Collectors.toList());
+
+        assertThat(scheduleResult).hasSize(100);
+        assertThat(scheduleResult).containsOnly(true, false);
     }
 }
