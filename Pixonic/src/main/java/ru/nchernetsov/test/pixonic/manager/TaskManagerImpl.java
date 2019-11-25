@@ -147,11 +147,10 @@ public class TaskManagerImpl implements TaskManager {
             Callable callable = task.getTask();
             try {
                 // если время выполнения задачи уже прошло, то сразу выполняем, иначе
-                // ждём какое-то время, а затем выполняем задачу
+                // ждём нужное время, а затем выполняем задачу
                 if (performTime.isAfter(now)) {
-                    Duration waitDuration = Duration.between(now, performTime);
-                    long waitMillis = waitDuration.toMillis();
-                    Thread.sleep(waitMillis);
+                    long waitMillis = Duration.between(now, performTime).toMillis();
+                    TimeUnit.MILLISECONDS.sleep(waitMillis);
                 }
                 Object callResult = callable.call();
                 Result<Object> result = new Result<>(task.getUuid(), callResult);
