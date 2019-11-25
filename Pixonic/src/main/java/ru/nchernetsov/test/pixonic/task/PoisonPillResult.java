@@ -1,4 +1,4 @@
-package ru.nchernetsov.test.pixonic;
+package ru.nchernetsov.test.pixonic.task;
 
 public class PoisonPillResult extends Result<Object> {
 

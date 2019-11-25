@@ -1,4 +1,4 @@
-package ru.nchernetsov.test.pixonic;
+package ru.nchernetsov.test.pixonic.task;
 
 import java.util.UUID;
 

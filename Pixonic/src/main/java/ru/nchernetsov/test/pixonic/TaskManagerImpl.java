@@ -2,17 +2,20 @@ package ru.nchernetsov.test.pixonic;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import ru.nchernetsov.test.pixonic.task.PoisonPillResult;
+import ru.nchernetsov.test.pixonic.task.PoisonPillTask;
+import ru.nchernetsov.test.pixonic.task.Result;
+import ru.nchernetsov.test.pixonic.task.Task;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Callable;
-import java.util.concurrent.PriorityBlockingQueue;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 public class TaskManagerImpl implements TaskManager {
+
+    private static final int EXECUTORS_COUNT = Runtime.getRuntime().availableProcessors();
 
     private final Logger log = LoggerFactory.getLogger(TaskManager.class);
 
@@ -35,9 +38,11 @@ public class TaskManagerImpl implements TaskManager {
     private final Map<UUID, UUID> taskClientMap = new HashMap<>();
 
     /**
-     * Сохраняем словарь вида <id клиента -> клиент> для отправки ответов подписавшимся клиентам
+     * Сохраняем словарь вида (id клиента => клиент) для отправки ответов подписавшимся клиентам
      */
     private final Map<UUID, Subscriber> subscribers = new HashMap<>();
+
+    private final ExecutorService executorService = Executors.newFixedThreadPool(EXECUTORS_COUNT);
 
     @Override
     public void start() {
@@ -77,8 +82,8 @@ public class TaskManagerImpl implements TaskManager {
         subscribers.remove(subscriber.getUuid());
     }
 
-    public void startExecutionLoop() {
-        Thread executionThread = new Thread(() -> {
+    void startExecutionLoop() {
+        new Thread(() -> {
             while (true) {
                 // выбираем задачи из очереди
                 try {
@@ -95,12 +100,12 @@ public class TaskManagerImpl implements TaskManager {
                     break;
                 }
             }
-        });
-        executionThread.start();
+            executorService.shutdown();
+        }).start();
     }
 
-    public void startNotificationLoop() {
-        Thread notificationThread = new Thread(() -> {
+    void startNotificationLoop() {
+        new Thread(() -> {
             while (true) {
                 while (!resultQueue.isEmpty()) {
                     Result<Object> result = resultQueue.poll();
@@ -111,28 +116,29 @@ public class TaskManagerImpl implements TaskManager {
                     notifyClient(result);
                 }
             }
-        });
-        notificationThread.start();
+        }).start();
     }
 
     private void invokeTask(Task task) {
-        LocalDateTime now = LocalDateTime.now();
-        LocalDateTime performTime = task.getTime();
-        Callable callable = task.getTask();
-        try {
-            // если время выполнения задачи уже прошло, то сразу выполняем, иначе
-            // ждём какое-то время, а затем выполняем задачу
-            if (performTime.isAfter(now)) {
-                Duration waitDuration = Duration.between(now, performTime);
-                long waitMillis = waitDuration.toMillis();
-                Thread.sleep(waitMillis);
+        executorService.submit(() -> {
+            LocalDateTime now = LocalDateTime.now();
+            LocalDateTime performTime = task.getTime();
+            Callable callable = task.getTask();
+            try {
+                // если время выполнения задачи уже прошло, то сразу выполняем, иначе
+                // ждём какое-то время, а затем выполняем задачу
+                if (performTime.isAfter(now)) {
+                    Duration waitDuration = Duration.between(now, performTime);
+                    long waitMillis = waitDuration.toMillis();
+                    Thread.sleep(waitMillis);
+                }
+                Object callResult = callable.call();
+                Result<Object> result = new Result<>(task.getUuid(), callResult);
+                resultQueue.offer(result);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
             }
-            Object callResult = callable.call();
-            Result<Object> result = new Result<>(task.getUuid(), callResult);
-            resultQueue.offer(result);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        });
     }
 
     private void notifyClient(Result<Object> result) {

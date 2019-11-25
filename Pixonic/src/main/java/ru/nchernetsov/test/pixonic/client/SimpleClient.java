@@ -1,6 +1,6 @@
 package ru.nchernetsov.test.pixonic.client;
 
-import ru.nchernetsov.test.pixonic.Result;
+import ru.nchernetsov.test.pixonic.task.Result;
 import ru.nchernetsov.test.pixonic.TaskManager;
 
 public class SimpleClient extends Client {

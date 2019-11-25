@@ -1,5 +1,7 @@
 package ru.nchernetsov.test.pixonic;
 
+import ru.nchernetsov.test.pixonic.task.Task;
+
 import java.util.Queue;
 import java.util.UUID;
 

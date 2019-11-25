@@ -2,6 +2,8 @@ package ru.nchernetsov.test.pixonic.client;
 
 import org.junit.Test;
 import ru.nchernetsov.test.pixonic.*;
+import ru.nchernetsov.test.pixonic.task.Result;
+import ru.nchernetsov.test.pixonic.task.Task;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;

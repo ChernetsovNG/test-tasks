@@ -1,7 +1,7 @@
 package ru.nchernetsov.test.pixonic.client;
 
 import ru.nchernetsov.test.pixonic.Subscriber;
-import ru.nchernetsov.test.pixonic.Task;
+import ru.nchernetsov.test.pixonic.task.Task;
 import ru.nchernetsov.test.pixonic.TaskManager;
 
 import java.util.UUID;

@@ -1,4 +1,4 @@
-package ru.nchernetsov.test.pixonic;
+package ru.nchernetsov.test.pixonic.task;
 
 import java.time.LocalDateTime;
 import java.util.UUID;

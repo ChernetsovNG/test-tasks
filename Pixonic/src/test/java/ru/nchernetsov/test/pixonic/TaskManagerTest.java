@@ -1,6 +1,8 @@
 package ru.nchernetsov.test.pixonic;
 
 import org.junit.Test;
+import ru.nchernetsov.test.pixonic.task.PoisonPillTask;
+import ru.nchernetsov.test.pixonic.task.Task;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
