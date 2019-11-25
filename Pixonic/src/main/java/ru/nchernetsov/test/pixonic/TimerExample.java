@@ -29,7 +29,7 @@ public class TimerExample {
 
         LocalDateTime startTime = LocalDateTime.now();
 
-        int workTimeSeconds = 20;
+        int workTimeSeconds = 10;
 
         // Создаём задачи из 2-х потоков
         Thread thread1 = new Thread(() -> {
@@ -39,7 +39,6 @@ public class TimerExample {
                 taskManager.scheduleTask(timerTask);
             }
         });
-        thread1.setDaemon(true);
 
         Thread thread2 = new Thread(() -> {
             for (int i = 1; i < workTimeSeconds; i += 2) {
@@ -48,7 +47,6 @@ public class TimerExample {
                 taskManager.scheduleTask(timerTask);
             }
         });
-        thread2.setDaemon(true);
 
         thread1.start();
         thread2.start();
