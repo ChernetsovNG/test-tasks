@@ -20,6 +20,7 @@ public abstract class Client implements Subscriber {
         taskManager.scheduleTask(task);
     }
 
+    @Override
     public UUID getUuid() {
         return uuid;
     }

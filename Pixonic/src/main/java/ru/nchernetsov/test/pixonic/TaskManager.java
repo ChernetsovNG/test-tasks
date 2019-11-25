@@ -5,6 +5,8 @@ import java.util.UUID;
 
 public interface TaskManager extends Publisher {
 
+    void start();
+
     /**
      * Отправить на выполнение задачу
      *

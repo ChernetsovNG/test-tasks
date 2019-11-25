@@ -5,10 +5,7 @@ import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.ArrayDeque;
-import java.util.Comparator;
-import java.util.Queue;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
@@ -30,10 +27,29 @@ public class TaskManagerImpl implements TaskManager {
     /**
      * Очередь результатов выполненных задач
      */
-    private final BlockingQueue<Result> resultQueue = new ArrayBlockingQueue<>(100);
+    private final BlockingQueue<Result<Object>> resultQueue = new ArrayBlockingQueue<>(100);
+
+    /**
+     * Для каждой задачи сохраняем id клиента, от которого она пришла
+     */
+    private final Map<UUID, UUID> taskClientMap = new HashMap<>();
+
+    /**
+     * Сохраняем словарь вида <id клиента -> клиент> для отправки ответов подписавшимся клиентам
+     */
+    private final Map<UUID, Subscriber> subscribers = new HashMap<>();
+
+    @Override
+    public void start() {
+        startExecutionLoop();
+        startNotificationLoop();
+    }
 
     @Override
     public <V> void scheduleTask(Task<V> task) {
+        UUID taskUuid = task.getUuid();
+        UUID clientUuid = task.getClientUUID();
+        taskClientMap.put(taskUuid, clientUuid);
         tasksQueue.offer(task);
     }
 
@@ -53,17 +69,12 @@ public class TaskManagerImpl implements TaskManager {
 
     @Override
     public void addSubscriber(Subscriber subscriber) {
-
+        subscribers.put(subscriber.getUuid(), subscriber);
     }
 
     @Override
     public void removeSubscriber(Subscriber subscriber) {
-
-    }
-
-    @Override
-    public void notifySubscribers() {
-
+        subscribers.remove(subscriber.getUuid());
     }
 
     public void startExecutionLoop() {
@@ -73,7 +84,8 @@ public class TaskManagerImpl implements TaskManager {
                 try {
                     Task task = tasksQueue.take();
                     if (task instanceof PoisonPillTask) {
-                        log.debug("receive Poison Pill => stop execution thread");
+                        log.debug("receive Poison Pill Task => stop execution thread");
+                        invokeTask(task);
                         break;
                     }
                     // и выполняем их
@@ -85,6 +97,22 @@ public class TaskManagerImpl implements TaskManager {
             }
         });
         executionThread.start();
+    }
+
+    public void startNotificationLoop() {
+        Thread notificationThread = new Thread(() -> {
+            while (true) {
+                while (!resultQueue.isEmpty()) {
+                    Result<Object> result = resultQueue.poll();
+                    if (result instanceof PoisonPillResult) {
+                        log.debug("receive Poison Pill => stop notification thread");
+                        break;
+                    }
+                    notifyClient(result);
+                }
+            }
+        });
+        notificationThread.start();
     }
 
     private void invokeTask(Task task) {
@@ -105,5 +133,17 @@ public class TaskManagerImpl implements TaskManager {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private void notifyClient(Result<Object> result) {
+        UUID onTaskUuid = result.getOnTask();
+        UUID clientUuidToNotify = taskClientMap.get(onTaskUuid);
+        if (clientUuidToNotify != null) {
+            Subscriber clientToNotify = subscribers.get(clientUuidToNotify);
+            if (clientToNotify != null) {
+                clientToNotify.onResult(result);
+            }
+        }
+        taskClientMap.remove(onTaskUuid);
     }
 }

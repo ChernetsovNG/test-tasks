@@ -1,12 +1,11 @@
 package ru.nchernetsov.test.pixonic.client;
 
 import org.junit.Test;
-import ru.nchernetsov.test.pixonic.Task;
-import ru.nchernetsov.test.pixonic.TaskManager;
-import ru.nchernetsov.test.pixonic.TaskManagerImpl;
+import ru.nchernetsov.test.pixonic.*;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -18,7 +17,9 @@ public class ClientTest {
         long deltaMillis = 200L;
 
         TaskManager taskManager = new TaskManagerImpl();
+        taskManager.start();
         SimpleClient client = new SimpleClient(taskManager);
+        taskManager.addSubscriber(client);
 
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime performTaskTime = now.plus(deltaMillis, ChronoUnit.MILLIS);  // через 200 миллисекунд
@@ -41,11 +42,16 @@ public class ClientTest {
     @Test
     public void severalClientsCreateTasksInDifferentThreadsAndShouldGetTheirResults() {
         TaskManager taskManager = new TaskManagerImpl();
+        taskManager.start();
 
         // Клиенты создают задачи из разных потоков
         ClientThread client1 = new ClientThread(taskManager, 100L, 3);
         ClientThread client2 = new ClientThread(taskManager, 200L, 7);
         ClientThread client3 = new ClientThread(taskManager, 300L, 11);
+
+        taskManager.addSubscriber(client1);
+        taskManager.addSubscriber(client2);
+        taskManager.addSubscriber(client3);
 
         // запускаем создание задач в разных потоках
         new Thread(client1).start();
@@ -63,6 +69,7 @@ public class ClientTest {
 
             assertThat(client1.getResult()).isNotNull();
             assertThat((Integer) client1.getResult()).isEqualTo(3);
+
             assertThat(client2.getResult()).isNull();
             assertThat(client3.getResult()).isNull();
 
@@ -71,8 +78,10 @@ public class ClientTest {
 
             assertThat(client1.getResult()).isNotNull();
             assertThat((Integer) client1.getResult()).isEqualTo(3);
+
             assertThat(client2.getResult()).isNotNull();
             assertThat((Integer) client2.getResult()).isEqualTo(7);
+
             assertThat(client3.getResult()).isNull();
 
             // через 350 мс все клиенты содержат результат
@@ -80,8 +89,10 @@ public class ClientTest {
 
             assertThat(client1.getResult()).isNotNull();
             assertThat((Integer) client1.getResult()).isEqualTo(3);
+
             assertThat(client2.getResult()).isNotNull();
             assertThat((Integer) client2.getResult()).isEqualTo(7);
+
             assertThat(client3.getResult()).isNotNull();
             assertThat((Integer) client3.getResult()).isEqualTo(11);
         } catch (InterruptedException e) {
@@ -89,9 +100,7 @@ public class ClientTest {
         }
     }
 
-    private static class ClientThread implements Runnable {
-
-        private final TaskManager taskManager;
+    private static class ClientThread implements Runnable, Subscriber {
 
         private final long deltaMillis;
 
@@ -100,10 +109,9 @@ public class ClientTest {
         private final SimpleClient client;
 
         private ClientThread(TaskManager taskManager, long deltaMillis, int result) {
-            this.taskManager = taskManager;
             this.deltaMillis = deltaMillis;
             this.result = result;
-            client = new SimpleClient(taskManager);
+            this.client = new SimpleClient(taskManager);
         }
 
         @Override
@@ -117,6 +125,16 @@ public class ClientTest {
 
         Object getResult() {
             return client.getResult();
+        }
+
+        @Override
+        public UUID getUuid() {
+            return client.getUuid();
+        }
+
+        @Override
+        public <V> void onResult(Result<V> result) {
+            client.onResult(result);
         }
     }
 }
