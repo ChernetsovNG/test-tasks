@@ -16,7 +16,7 @@ public class Task<V> {
     /**
      * Идентификатор клиента, создавшего данную задачу
      */
-    private final UUID clientUUID;
+    private final UUID clientUuid;
 
     /**
      * Момент времени, в который нужно начать выполнение задача
@@ -28,8 +28,8 @@ public class Task<V> {
      */
     private final Callable<V> task;
 
-    public Task(UUID clientUUID, LocalDateTime time, Callable<V> task) {
-        this.clientUUID = clientUUID;
+    public Task(UUID clientUuid, LocalDateTime time, Callable<V> task) {
+        this.clientUuid = clientUuid;
         this.time = time;
         this.task = task;
     }
@@ -38,8 +38,8 @@ public class Task<V> {
         return uuid;
     }
 
-    public UUID getClientUUID() {
-        return clientUUID;
+    public UUID getClientUuid() {
+        return clientUuid;
     }
 
     public LocalDateTime getTime() {

@@ -1,9 +1,9 @@
 package ru.nchernetsov.test.pixonic.client;
 
+import ru.nchernetsov.test.pixonic.manager.TaskManager;
 import ru.nchernetsov.test.pixonic.task.Result;
-import ru.nchernetsov.test.pixonic.TaskManager;
 
-public class SimpleClient extends Client {
+public class SimpleClient extends Client<Object> {
 
     private Object result;
 
@@ -12,7 +12,7 @@ public class SimpleClient extends Client {
     }
 
     @Override
-    public <V> void onResult(Result<V> result) {
+    public void onResult(Result<Object> result) {
         this.result = result.getResult();
     }
 

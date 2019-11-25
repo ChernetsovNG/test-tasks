@@ -1,12 +1,12 @@
 package ru.nchernetsov.test.pixonic.client;
 
-import ru.nchernetsov.test.pixonic.Subscriber;
+import ru.nchernetsov.test.pixonic.manager.Subscriber;
+import ru.nchernetsov.test.pixonic.manager.TaskManager;
 import ru.nchernetsov.test.pixonic.task.Task;
-import ru.nchernetsov.test.pixonic.TaskManager;
 
 import java.util.UUID;
 
-public abstract class Client implements Subscriber {
+public abstract class Client<V> implements Subscriber<V> {
 
     private final UUID uuid = UUID.randomUUID();
 
@@ -16,7 +16,7 @@ public abstract class Client implements Subscriber {
         this.taskManager = taskManager;
     }
 
-    public <V> void scheduleTask(Task<V> task) {
+    public void scheduleTask(Task<V> task) {
         taskManager.scheduleTask(task);
     }
 

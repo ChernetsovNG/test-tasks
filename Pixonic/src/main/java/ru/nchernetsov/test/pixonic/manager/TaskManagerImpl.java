@@ -1,4 +1,4 @@
-package ru.nchernetsov.test.pixonic;
+package ru.nchernetsov.test.pixonic.manager;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,7 +17,7 @@ public class TaskManagerImpl implements TaskManager {
 
     private static final int EXECUTORS_COUNT = Runtime.getRuntime().availableProcessors();
 
-    private final Logger log = LoggerFactory.getLogger(TaskManager.class);
+    private static final Logger log = LoggerFactory.getLogger(TaskManager.class);
 
     /**
      * Очередь задач для выполнения:
@@ -53,7 +53,7 @@ public class TaskManagerImpl implements TaskManager {
     @Override
     public <V> void scheduleTask(Task<V> task) {
         UUID taskUuid = task.getUuid();
-        UUID clientUuid = task.getClientUUID();
+        UUID clientUuid = task.getClientUuid();
         taskClientMap.put(taskUuid, clientUuid);
         tasksQueue.offer(task);
     }
@@ -82,40 +82,42 @@ public class TaskManagerImpl implements TaskManager {
         subscribers.remove(subscriber.getUuid());
     }
 
-    void startExecutionLoop() {
+    public void startExecutionLoop() {
         new Thread(() -> {
             while (true) {
                 // выбираем задачи из очереди
                 try {
                     Task task = tasksQueue.take();
-                    if (task instanceof PoisonPillTask) {
-                        log.debug("receive Poison Pill Task => stop execution thread");
-                        invokeTask(task);
-                        break;
-                    }
                     // и выполняем их
                     invokeTask(task);
+                    if (task instanceof PoisonPillTask) {
+                        log.debug("receive PoisonPill Task => stop execution thread");
+                        break;
+                    }
                 } catch (InterruptedException e) {
                     log.debug("executionThread interrupt: exception = {}", e.getMessage());
                     break;
                 }
             }
-            executorService.shutdown();
         }).start();
     }
 
     void startNotificationLoop() {
         new Thread(() -> {
             while (true) {
-                while (!resultQueue.isEmpty()) {
-                    Result<Object> result = resultQueue.poll();
-                    if (result instanceof PoisonPillResult) {
-                        log.debug("receive Poison Pill => stop notification thread");
+                try {
+                    Result<Object> result = resultQueue.take();
+                    if (result.getResult() instanceof PoisonPillResult) {
+                        log.debug("receive PoisonPill Result => stop notification thread");
                         break;
                     }
                     notifyClient(result);
+                } catch (InterruptedException e) {
+                    log.debug("notificationThread interrupt: exception = {}", e.getMessage());
+                    break;
                 }
             }
+            executorService.shutdown();
         }).start();
     }
 

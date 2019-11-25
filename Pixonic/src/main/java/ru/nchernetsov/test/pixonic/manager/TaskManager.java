@@ -1,4 +1,4 @@
-package ru.nchernetsov.test.pixonic;
+package ru.nchernetsov.test.pixonic.manager;
 
 import ru.nchernetsov.test.pixonic.task.Task;
 

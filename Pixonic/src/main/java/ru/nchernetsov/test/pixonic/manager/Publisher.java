@@ -1,4 +1,4 @@
-package ru.nchernetsov.test.pixonic;
+package ru.nchernetsov.test.pixonic.manager;
 
 public interface Publisher {
 

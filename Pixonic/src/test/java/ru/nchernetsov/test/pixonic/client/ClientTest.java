@@ -1,7 +1,9 @@
 package ru.nchernetsov.test.pixonic.client;
 
 import org.junit.Test;
-import ru.nchernetsov.test.pixonic.*;
+import ru.nchernetsov.test.pixonic.manager.Subscriber;
+import ru.nchernetsov.test.pixonic.manager.TaskManager;
+import ru.nchernetsov.test.pixonic.manager.TaskManagerImpl;
 import ru.nchernetsov.test.pixonic.task.Result;
 import ru.nchernetsov.test.pixonic.task.Task;
 
@@ -26,7 +28,7 @@ public class ClientTest {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime performTaskTime = now.plus(deltaMillis, ChronoUnit.MILLIS);  // через 200 миллисекунд
 
-        Task<Integer> task = new Task<>(client.getUuid(), performTaskTime, () -> 42);
+        Task<Object> task = new Task<>(client.getUuid(), performTaskTime, () -> 42);
         client.scheduleTask(task);
 
         assertThat(client.getResult()).isNull();
@@ -102,7 +104,7 @@ public class ClientTest {
         }
     }
 
-    private static class ClientThread implements Runnable, Subscriber {
+    private static class ClientThread implements Runnable, Subscriber<Object> {
 
         private final long deltaMillis;
 
@@ -121,7 +123,7 @@ public class ClientTest {
             LocalDateTime now = LocalDateTime.now();
             LocalDateTime performTaskTime = now.plus(deltaMillis, ChronoUnit.MILLIS);
 
-            Task<Integer> task = new Task<>(client.getUuid(), performTaskTime, () -> result);
+            Task<Object> task = new Task<>(client.getUuid(), performTaskTime, () -> result);
             client.scheduleTask(task);
         }
 
@@ -135,7 +137,7 @@ public class ClientTest {
         }
 
         @Override
-        public <V> void onResult(Result<V> result) {
+        public void onResult(Result<Object> result) {
             client.onResult(result);
         }
     }

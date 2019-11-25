@@ -30,4 +30,12 @@ public class Result<V> {
     public V getResult() {
         return result;
     }
+
+    @Override
+    public String toString() {
+        return "Result{" +
+                "onTask=" + onTask +
+                ", result=" + result +
+                '}';
+    }
 }
