@@ -24,7 +24,7 @@ public class TimerExample {
         // подписываемся в клиенте на результат
         taskManager.addSubscriber(timerClient);
 
-        // запускаем потоки выполнения менеджерва
+        // запускаем потоки выполнения менеджера
         taskManager.start();
 
         LocalDateTime startTime = LocalDateTime.now();

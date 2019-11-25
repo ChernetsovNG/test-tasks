@@ -2,7 +2,7 @@ package ru.nchernetsov.test.pixonic.task;
 
 public class PoisonPillResult extends Result<Object> {
 
-    public PoisonPillResult() {
+    PoisonPillResult() {
         super(null, null);
     }
 }
