@@ -41,12 +41,12 @@ public class TaskManagerImpl implements TaskManager {
     /**
      * Для каждой задачи сохраняем id клиента, от которого она пришла
      */
-    private final Map<UUID, UUID> taskClientMap = new HashMap<>();
+    private final Map<UUID, UUID> taskClientMap = new ConcurrentHashMap<>();
 
     /**
      * Сохраняем словарь вида (id клиента => клиент) для отправки ответов подписавшимся клиентам
      */
-    private final Map<UUID, Subscriber> subscribers = new HashMap<>();
+    private final Map<UUID, Subscriber> subscribers = new ConcurrentHashMap<>();
 
     private final ExecutorService executorService = Executors.newFixedThreadPool(EXECUTORS_COUNT);
 
@@ -70,7 +70,9 @@ public class TaskManagerImpl implements TaskManager {
     public <V> boolean scheduleTask(Task<V> task) {
         UUID taskUuid = task.getUuid();
         UUID clientUuid = task.getClientUuid();
-        taskClientMap.put(taskUuid, clientUuid);
+        if (clientUuid != null) {
+            taskClientMap.put(taskUuid, clientUuid);
+        }
         if (tasksQueue.size() >= tasksMaxCount) {
             return false;
         }
