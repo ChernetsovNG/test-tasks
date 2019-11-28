@@ -71,9 +71,9 @@ public class TaskManagerTest {
 
         taskManager.scheduleTask(task31);
         taskManager.scheduleTask(task2);
-        taskManager.scheduleTask(task33);
-        taskManager.scheduleTask(task1);
         taskManager.scheduleTask(task32);
+        taskManager.scheduleTask(task1);
+        taskManager.scheduleTask(task33);
 
         // После планирования задачи должны быть упорядочены таким образом, чтобы в конце списка
         // была задача, которая должна быть выполнена первой. Из одинаковых по времени задач первой должна выполниться

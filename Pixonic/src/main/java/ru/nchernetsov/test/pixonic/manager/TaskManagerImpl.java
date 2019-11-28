@@ -14,19 +14,25 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.UUID;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 public class TaskManagerImpl implements TaskManager {
 
+    private static final Logger log = LoggerFactory.getLogger(TaskManager.class);
+
     private static final int EXECUTORS_COUNT = Runtime.getRuntime().availableProcessors();
+
+    /**
+     * Для обеспечения правильного упорядочивания задач с одинаковым временем планирования в PriorityBlockingQueue
+     */
+    private static final AtomicLong seq = new AtomicLong(0);
 
     /**
      * Максимальный размер очереди задач (т.к. очередь PriorityBlockingQueue растёт неограниченно,
      * то мы её ограничим принудительно, чтобы не исчерпалась память)
      */
     private final int tasksMaxCount;
-
-    private static final Logger log = LoggerFactory.getLogger(TaskManager.class);
 
     /**
      * Очередь задач для выполнения:
@@ -71,6 +77,7 @@ public class TaskManagerImpl implements TaskManager {
 
     @Override
     public <V> boolean scheduleTask(Task<V> task) {
+        task.setSeqNum(seq.getAndIncrement());
         UUID taskUuid = task.getUuid();
         UUID clientUuid = task.getClientUuid();
         if (clientUuid != null) {

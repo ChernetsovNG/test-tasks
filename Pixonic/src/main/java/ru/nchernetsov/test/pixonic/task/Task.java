@@ -12,14 +12,7 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class Task<V> implements Comparable<Task<V>> {
 
-    /**
-     * Для обеспечения правильного упорядочивания задач с одинаковым временем планирования в PriorityBlockingQueue
-     */
-    private static final AtomicLong seq = new AtomicLong(0);
-
     private final UUID uuid = UUID.randomUUID();
-
-    private final long seqNum = seq.getAndIncrement();
 
     /**
      * Идентификатор клиента, создавшего данную задачу
@@ -35,6 +28,8 @@ public class Task<V> implements Comparable<Task<V>> {
      * Вычислительная задача, возвращающая значение типа V
      */
     private final Callable<V> task;
+
+    private long seqNum;
 
     public Task(UUID clientUuid, LocalDateTime time, Callable<V> task) {
         this.clientUuid = clientUuid;
@@ -56,6 +51,10 @@ public class Task<V> implements Comparable<Task<V>> {
 
     public Callable<V> getTask() {
         return task;
+    }
+
+    public void setSeqNum(long seqNum) {
+        this.seqNum = seqNum;
     }
 
     @Override
