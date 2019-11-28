@@ -24,11 +24,6 @@ public class TaskManagerImpl implements TaskManager {
     private static final int EXECUTORS_COUNT = Runtime.getRuntime().availableProcessors();
 
     /**
-     * Для обеспечения правильного упорядочивания задач с одинаковым временем планирования в PriorityBlockingQueue
-     */
-    private static final AtomicLong seq = new AtomicLong(0);
-
-    /**
      * Максимальный размер очереди задач (т.к. очередь PriorityBlockingQueue растёт неограниченно,
      * то мы её ограничим принудительно, чтобы не исчерпалась память)
      */
@@ -40,7 +35,7 @@ public class TaskManagerImpl implements TaskManager {
      * задачи должны выполняться в порядке согласно значению LocalDateTime
      * либо в порядке прихода события для равных LocalDateTime
      */
-    private final BlockingQueue<Task> tasksQueue;
+    private final BlockingQueue<PerformTask> tasksQueue;
 
     /**
      * Очередь результатов выполненных задач
@@ -77,7 +72,6 @@ public class TaskManagerImpl implements TaskManager {
 
     @Override
     public <V> boolean scheduleTask(Task<V> task) {
-        task.setSeqNum(seq.getAndIncrement());
         UUID taskUuid = task.getUuid();
         UUID clientUuid = task.getClientUuid();
         if (clientUuid != null) {
@@ -86,15 +80,15 @@ public class TaskManagerImpl implements TaskManager {
         if (tasksQueue.size() >= tasksMaxCount) {
             return false;
         }
-        return tasksQueue.offer(task);
+        return tasksQueue.offer(new PerformTask<>(task));
     }
 
     @Override
     public Queue<UUID> getScheduledTasks() {
-        BlockingQueue<Task> copy = new PriorityBlockingQueue<>(tasksQueue);
+        BlockingQueue<PerformTask> copy = new PriorityBlockingQueue<>(tasksQueue);
         Queue<UUID> result = new ArrayDeque<>();
         while (!copy.isEmpty()) {
-            result.offer(copy.poll().getUuid());
+            result.offer(copy.poll().task.getUuid());
         }
         return result;
     }
@@ -121,7 +115,7 @@ public class TaskManagerImpl implements TaskManager {
             while (true) {
                 // выбираем задачи из очереди
                 try {
-                    Task task = tasksQueue.take();
+                    Task task = tasksQueue.take().task;
                     // и выполняем их
                     invokeTask(task);
                     if (task instanceof PoisonPillTask) {
@@ -181,5 +175,37 @@ public class TaskManagerImpl implements TaskManager {
             }
         }
         taskClientMap.remove(onTaskUuid);
+    }
+
+    /**
+     * Вспомогатльный класс, добавляющий к Task ещё последовательность добавления задачи в очередь
+     */
+    private static final class PerformTask<V> implements Comparable<PerformTask<V>> {
+
+        /**
+         * Для обеспечения правильного упорядочивания задач с одинаковым временем планирования в PriorityBlockingQueue
+         */
+        private static final AtomicLong seq = new AtomicLong(0);
+
+        /**
+         * Последовательность добавления задачи в очередь (для сортировки)
+         */
+        private final long seqNum;
+
+        private final Task<V> task;
+
+        PerformTask(Task<V> task) {
+            this.seqNum = seq.getAndIncrement();
+            this.task = task;
+        }
+
+        @Override
+        public int compareTo(PerformTask<V> other) {
+            int res = this.task.getTime().compareTo(other.task.getTime());
+            if (res == 0 && other != this) {
+                res = seqNum < other.seqNum ? -1 : 1;
+            }
+            return res;
+        }
     }
 }
