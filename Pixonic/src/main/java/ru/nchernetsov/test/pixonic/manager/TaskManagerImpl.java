@@ -9,7 +9,10 @@ import ru.nchernetsov.test.pixonic.task.Task;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.Map;
+import java.util.Queue;
+import java.util.UUID;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
@@ -55,7 +58,7 @@ public class TaskManagerImpl implements TaskManager {
     }
 
     public TaskManagerImpl(int capacity, int tasksMaxCount) {
-        tasksQueue = new PriorityBlockingQueue<>(capacity, Comparator.comparing(Task::getTime));
+        tasksQueue = new PriorityBlockingQueue<>(capacity);
         resultQueue = new ArrayBlockingQueue<>(capacity);
         this.tasksMaxCount = tasksMaxCount;
     }
