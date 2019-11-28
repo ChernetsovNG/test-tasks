@@ -51,7 +51,7 @@ public class TaskManagerImpl implements TaskManager {
      */
     private final Map<UUID, Subscriber> subscribers = new ConcurrentHashMap<>();
 
-    private final ExecutorService executorService = Executors.newFixedThreadPool(EXECUTORS_COUNT);
+    private final ScheduledExecutorService executorService = Executors.newScheduledThreadPool(EXECUTORS_COUNT);
 
     public TaskManagerImpl() {
         this(100, 1000);
@@ -145,25 +145,20 @@ public class TaskManagerImpl implements TaskManager {
         }).start();
     }
 
-    private void invokeTask(Task task) {
-        executorService.submit(() -> {
-            LocalDateTime now = LocalDateTime.now();
-            LocalDateTime performTime = task.getTime();
-            Callable callable = task.getTask();
+    private void invokeTask(final Task task) {
+        // если время выполнения задачи уже прошло, то сразу выполняем задачу, иначе планируем её выполнение в будущем
+        long delayMillis = Duration.between(LocalDateTime.now(), task.getTime()).toMillis();
+        // при delayMillis < 0 задача будет выполнена сразу же (с нулевой задержкой), см.
+        // java.util.concurrent.ScheduledThreadPoolExecutor.triggerTime(long, java.util.concurrent.TimeUnit)
+        executorService.schedule(() -> {
             try {
-                // если время выполнения задачи уже прошло, то сразу выполняем, иначе
-                // ждём нужное время, а затем выполняем задачу
-                if (performTime.isAfter(now)) {
-                    long waitMillis = Duration.between(now, performTime).toMillis();
-                    TimeUnit.MILLISECONDS.sleep(waitMillis);
-                }
-                Object callResult = callable.call();
+                Object callResult = task.getTask().call();
                 Result<Object> result = new Result<>(task.getUuid(), callResult);
                 resultQueue.offer(result);
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
-        });
+        }, delayMillis, TimeUnit.MILLISECONDS);
     }
 
     private void notifyClient(Result<Object> result) {
