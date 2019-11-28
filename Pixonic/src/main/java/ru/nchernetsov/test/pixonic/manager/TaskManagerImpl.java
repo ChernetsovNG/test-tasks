@@ -84,9 +84,12 @@ public class TaskManagerImpl implements TaskManager {
 
     @Override
     public Queue<UUID> getScheduledTasks() {
-        return tasksQueue.stream()
-                .map(Task::getUuid)
-                .collect(Collectors.toCollection(ArrayDeque::new));
+        BlockingQueue<Task> copy = new PriorityBlockingQueue<>(tasksQueue);
+        Queue<UUID> result = new ArrayDeque<>();
+        while (!copy.isEmpty()) {
+            result.offer(copy.poll().getUuid());
+        }
+        return result;
     }
 
     @Override
