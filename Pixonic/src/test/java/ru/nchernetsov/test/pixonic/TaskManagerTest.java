@@ -105,7 +105,7 @@ public class TaskManagerTest {
         taskManager.scheduleTask(task3);
 
         // запускаем исполнение задач
-        taskManager.startExecutionLoop();
+        taskManager.executionLoop();
 
         try {
             TimeUnit.MILLISECONDS.sleep(350);

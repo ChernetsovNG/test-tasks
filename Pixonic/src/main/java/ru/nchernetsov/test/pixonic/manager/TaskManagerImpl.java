@@ -65,8 +65,8 @@ public class TaskManagerImpl implements TaskManager {
 
     @Override
     public void start() {
-        startExecutionLoop();
-        startNotificationLoop();
+        executionLoop();
+        notificationLoop();
     }
 
     @Override
@@ -106,7 +106,7 @@ public class TaskManagerImpl implements TaskManager {
         subscribers.remove(subscriber.getUuid());
     }
 
-    public void startExecutionLoop() {
+    public void executionLoop() {
         new Thread(() -> {
             while (true) {
                 // выбираем задачи из очереди
@@ -126,7 +126,7 @@ public class TaskManagerImpl implements TaskManager {
         }).start();
     }
 
-    void startNotificationLoop() {
+    void notificationLoop() {
         new Thread(() -> {
             while (true) {
                 try {
