@@ -14,9 +14,12 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.UUID;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 public class TaskManagerImpl implements TaskManager {
+
+    private static final Logger log = LoggerFactory.getLogger(TaskManager.class);
 
     private static final int EXECUTORS_COUNT = Runtime.getRuntime().availableProcessors();
 
@@ -26,15 +29,13 @@ public class TaskManagerImpl implements TaskManager {
      */
     private final int tasksMaxCount;
 
-    private static final Logger log = LoggerFactory.getLogger(TaskManager.class);
-
     /**
      * Очередь задач для выполнения:
      * очередь с приоритетом использует Comparator для упорядочивания задач в соответствии с условием:
      * задачи должны выполняться в порядке согласно значению LocalDateTime
      * либо в порядке прихода события для равных LocalDateTime
      */
-    private final BlockingQueue<Task> tasksQueue;
+    private final BlockingQueue<PerformTask> tasksQueue;
 
     /**
      * Очередь результатов выполненных задач
@@ -51,7 +52,7 @@ public class TaskManagerImpl implements TaskManager {
      */
     private final Map<UUID, Subscriber> subscribers = new ConcurrentHashMap<>();
 
-    private final ExecutorService executorService = Executors.newFixedThreadPool(EXECUTORS_COUNT);
+    private final ScheduledExecutorService executorService = Executors.newScheduledThreadPool(EXECUTORS_COUNT);
 
     public TaskManagerImpl() {
         this(100, 1000);
@@ -65,8 +66,8 @@ public class TaskManagerImpl implements TaskManager {
 
     @Override
     public void start() {
-        startExecutionLoop();
-        startNotificationLoop();
+        executionLoop();
+        notificationLoop();
     }
 
     @Override
@@ -79,14 +80,17 @@ public class TaskManagerImpl implements TaskManager {
         if (tasksQueue.size() >= tasksMaxCount) {
             return false;
         }
-        return tasksQueue.offer(task);
+        return tasksQueue.offer(new PerformTask<>(task));
     }
 
     @Override
     public Queue<UUID> getScheduledTasks() {
-        return tasksQueue.stream()
-                .map(Task::getUuid)
-                .collect(Collectors.toCollection(ArrayDeque::new));
+        BlockingQueue<PerformTask> copy = new PriorityBlockingQueue<>(tasksQueue);
+        Queue<UUID> result = new ArrayDeque<>();
+        while (!copy.isEmpty()) {
+            result.offer(copy.poll().task.getUuid());
+        }
+        return result;
     }
 
     @Override
@@ -106,12 +110,12 @@ public class TaskManagerImpl implements TaskManager {
         subscribers.remove(subscriber.getUuid());
     }
 
-    public void startExecutionLoop() {
+    public void executionLoop() {
         new Thread(() -> {
             while (true) {
                 // выбираем задачи из очереди
                 try {
-                    Task task = tasksQueue.take();
+                    Task task = tasksQueue.take().task;
                     // и выполняем их
                     invokeTask(task);
                     if (task instanceof PoisonPillTask) {
@@ -126,7 +130,7 @@ public class TaskManagerImpl implements TaskManager {
         }).start();
     }
 
-    void startNotificationLoop() {
+    void notificationLoop() {
         new Thread(() -> {
             while (true) {
                 try {
@@ -145,25 +149,20 @@ public class TaskManagerImpl implements TaskManager {
         }).start();
     }
 
-    private void invokeTask(Task task) {
-        executorService.submit(() -> {
-            LocalDateTime now = LocalDateTime.now();
-            LocalDateTime performTime = task.getTime();
-            Callable callable = task.getTask();
+    private void invokeTask(final Task task) {
+        // если время выполнения задачи уже прошло, то сразу выполняем задачу, иначе планируем её выполнение в будущем
+        long delayMillis = Duration.between(LocalDateTime.now(), task.getTime()).toMillis();
+        // при delayMillis < 0 задача будет выполнена сразу же (с нулевой задержкой), см.
+        // java.util.concurrent.ScheduledThreadPoolExecutor.triggerTime(long, java.util.concurrent.TimeUnit)
+        executorService.schedule(() -> {
             try {
-                // если время выполнения задачи уже прошло, то сразу выполняем, иначе
-                // ждём нужное время, а затем выполняем задачу
-                if (performTime.isAfter(now)) {
-                    long waitMillis = Duration.between(now, performTime).toMillis();
-                    TimeUnit.MILLISECONDS.sleep(waitMillis);
-                }
-                Object callResult = callable.call();
+                Object callResult = task.getTask().call();
                 Result<Object> result = new Result<>(task.getUuid(), callResult);
                 resultQueue.offer(result);
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
-        });
+        }, delayMillis, TimeUnit.MILLISECONDS);
     }
 
     private void notifyClient(Result<Object> result) {
@@ -176,5 +175,37 @@ public class TaskManagerImpl implements TaskManager {
             }
         }
         taskClientMap.remove(onTaskUuid);
+    }
+
+    /**
+     * Вспомогатльный класс, добавляющий к Task ещё последовательность добавления задачи в очередь
+     */
+    private static final class PerformTask<V> implements Comparable<PerformTask<V>> {
+
+        /**
+         * Для обеспечения правильного упорядочивания задач с одинаковым временем планирования в PriorityBlockingQueue
+         */
+        private static final AtomicLong seq = new AtomicLong(0);
+
+        /**
+         * Последовательность добавления задачи в очередь (для сортировки)
+         */
+        private final long seqNum;
+
+        private final Task<V> task;
+
+        PerformTask(Task<V> task) {
+            this.seqNum = seq.getAndIncrement();
+            this.task = task;
+        }
+
+        @Override
+        public int compareTo(PerformTask<V> other) {
+            int res = this.task.getTime().compareTo(other.task.getTime());
+            if (res == 0 && other != this) {
+                res = seqNum < other.seqNum ? -1 : 1;
+            }
+            return res;
+        }
     }
 }

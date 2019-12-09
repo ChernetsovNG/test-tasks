@@ -35,9 +35,9 @@ public class TaskManagerTest {
         UUID task2Uuid = task2.getUuid();
         UUID task3Uuid = task3.getUuid();
 
-        taskManager.scheduleTask(task1);
-        taskManager.scheduleTask(task2);
         taskManager.scheduleTask(task3);
+        taskManager.scheduleTask(task2);
+        taskManager.scheduleTask(task1);
 
         // После планирования задачи должны быть упорядочены таким образом, чтобы в конце списка
         // была задача, которая должна быть выполнена первой
@@ -69,10 +69,10 @@ public class TaskManagerTest {
         UUID task32Uuid = task32.getUuid();
         UUID task33Uuid = task33.getUuid();
 
-        taskManager.scheduleTask(task1);
-        taskManager.scheduleTask(task2);
         taskManager.scheduleTask(task31);
+        taskManager.scheduleTask(task2);
         taskManager.scheduleTask(task32);
+        taskManager.scheduleTask(task1);
         taskManager.scheduleTask(task33);
 
         // После планирования задачи должны быть упорядочены таким образом, чтобы в конце списка
@@ -105,7 +105,7 @@ public class TaskManagerTest {
         taskManager.scheduleTask(task3);
 
         // запускаем исполнение задач
-        taskManager.startExecutionLoop();
+        taskManager.executionLoop();
 
         try {
             TimeUnit.MILLISECONDS.sleep(350);

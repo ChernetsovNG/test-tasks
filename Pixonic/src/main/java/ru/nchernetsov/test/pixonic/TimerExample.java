@@ -1,5 +1,7 @@
 package ru.nchernetsov.test.pixonic;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import ru.nchernetsov.test.pixonic.client.Client;
 import ru.nchernetsov.test.pixonic.client.TimerClient;
 import ru.nchernetsov.test.pixonic.manager.TaskManager;
@@ -16,6 +18,8 @@ import java.util.concurrent.TimeUnit;
  */
 public class TimerExample {
 
+    private static final Logger log = LoggerFactory.getLogger(TimerExample.class);
+
     public static void main(String[] args) {
         // Создаём менеджера задач и клиента
         TaskManager taskManager = new TaskManagerImpl();
@@ -27,7 +31,10 @@ public class TimerExample {
         // запускаем потоки выполнения менеджера
         taskManager.start();
 
-        LocalDateTime startTime = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime startTime = now.plusSeconds(2);
+
+        log.debug("Invoke time = {}, startTime +2 seconds = {}", now, startTime);
 
         int workTimeSeconds = 10;
 
