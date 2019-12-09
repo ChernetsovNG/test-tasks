@@ -7,5 +7,5 @@ import java.util.List;
 @Data
 public class Stocks {
 
-    private final List<Stock> stocks;
+    private List<StockPacket> stocks;
 }

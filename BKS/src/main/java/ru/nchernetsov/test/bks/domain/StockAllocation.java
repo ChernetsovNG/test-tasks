@@ -1,22 +1,26 @@
 package ru.nchernetsov.test.bks.domain;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class StockAllocation {
 
     /**
      * Сектор, в котором работает компания
      */
-    private final String sector;
+    private String sector;
 
     /**
      * Текущая стоимость акции в составе портфеля
      */
-    private final Double assertValue;
+    private Double assertValue;
 
     /**
      * Процентное соотношение стоимости акций для сектора
      */
-    private final Double proportion;
+    private Double proportion;
 }
