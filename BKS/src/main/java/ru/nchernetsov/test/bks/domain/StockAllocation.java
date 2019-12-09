@@ -17,7 +17,7 @@ public class StockAllocation {
     /**
      * Текущая стоимость акции в составе портфеля
      */
-    private Double assertValue;
+    private Double assetValue;
 
     /**
      * Процентное соотношение стоимости акций для сектора
