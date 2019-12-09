@@ -5,6 +5,8 @@ import lombok.Data;
 @Data
 public class StockInfo {
 
+    private String symbol;
+
     /**
      * Текущая котировка акции
      */

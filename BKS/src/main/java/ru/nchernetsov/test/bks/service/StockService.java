@@ -1,6 +1,8 @@
 package ru.nchernetsov.test.bks.service;
 
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import ru.nchernetsov.test.bks.domain.StockInfo;
 import ru.nchernetsov.test.bks.domain.StockPacket;
 import ru.nchernetsov.test.bks.domain.StocksAllocations;
 
@@ -14,4 +16,6 @@ public interface StockService {
      * @param stocks набор акций
      */
     Mono<StocksAllocations> calculateStocksAllocations(List<StockPacket> stocks);
+
+    Flux<StockInfo> getStocksInfo(List<String> stocks);
 }
