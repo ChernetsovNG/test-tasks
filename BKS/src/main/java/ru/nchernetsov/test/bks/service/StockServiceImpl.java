@@ -1,12 +1,12 @@
 package ru.nchernetsov.test.bks.service;
 
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ru.nchernetsov.test.bks.api.ApiClient;
-import ru.nchernetsov.test.bks.domain.StockInfo;
-import ru.nchernetsov.test.bks.domain.StockPacket;
-import ru.nchernetsov.test.bks.domain.StocksAllocations;
+import ru.nchernetsov.test.bks.domain.*;
 
 import java.util.HashSet;
 import java.util.List;
@@ -49,7 +49,27 @@ public class StockServiceImpl implements StockService {
 
         // 4. Посчитать процентное соотношение стоимости акций для каждого сектора (proportion),
         // используя формулу: sum(assetValue) in sector / value
+        Flux<StockInfoWithAsset> stockInfosWithAsset = stocksInfo.zipWith(assetValues, this::getStockInfoWithAsset);
 
+        // группируем по сектору и считаем сумму assetValue в каждом секторе
+        Flux<Pair<String, Double>> sectorSumAssetFlux = stockInfosWithAsset.groupBy(StockInfoWithAsset::getSector)
+                .flatMap(Flux::collectList)
+                .map(stockInfoWithAssetGroup -> {
+                    String sector = stockInfoWithAssetGroup.get(0).getSector();
+                    double sumAsset = stockInfoWithAssetGroup.stream()
+                            .map(StockInfoWithAsset::getAssetValue)
+                            .mapToDouble(v -> v)
+                            .sum();
+                    return Pair.of(sector, sumAsset);
+                });
+
+        // Считаем пропорцию в каждом секторе
+        Mono<List<StockAllocation>> stockAllocationsList = sectorSumAssetFlux.zipWith(value, (symbolSumAsset, sum) -> {
+            String sector = symbolSumAsset.getLeft();
+            Double sumAsset = symbolSumAsset.getRight();
+            Double proportion = sumAsset / sum;
+            return new StockAllocation(sector, sumAsset, proportion);
+        }).collectList();
 
         return null;
     }
@@ -57,5 +77,21 @@ public class StockServiceImpl implements StockService {
     @Override
     public Flux<StockInfo> getStocksInfo(List<String> stocks) {
         return apiClient.getStocksInfo(new HashSet<>(stocks));
+    }
+
+    private StocksAllocations getStocksAllocations(Double value, List<StockAllocation> allocations) {
+        StocksAllocations stocksAllocations = new StocksAllocations();
+        stocksAllocations.setValue(value);
+        stocksAllocations.setAllocations(allocations);
+        return stocksAllocations;
+    }
+
+    private StockInfoWithAsset getStockInfoWithAsset(StockInfo stockInfo, Double assetValue) {
+        StockInfoWithAsset stockInfoWithAsset = new StockInfoWithAsset();
+        stockInfoWithAsset.setSymbol(stockInfo.getSymbol());
+        stockInfoWithAsset.setSector(stockInfo.getSector());
+        stockInfoWithAsset.setLatestPrice(stockInfo.getLatestPrice());
+        stockInfoWithAsset.setAssetValue(assetValue);
+        return stockInfoWithAsset;
     }
 }

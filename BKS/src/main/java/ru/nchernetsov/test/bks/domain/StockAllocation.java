@@ -15,7 +15,7 @@ public class StockAllocation {
     private String sector;
 
     /**
-     * Текущая стоимость акции в составе портфеля
+     * Текущая стоимость акций в составе портфеля (для сектора)
      */
     private Double assetValue;
 
