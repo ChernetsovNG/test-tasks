@@ -7,7 +7,9 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class StockInfo {
+public class StockPacketExt {
+
+    private StockPacket stockPacket;
 
     private String symbol;
 
@@ -20,4 +22,9 @@ public class StockInfo {
      * Сектор, в котором работает компания, выпускающая данные акции
      */
     private String sector;
+
+    /**
+     * Стоимость пакета акций
+     */
+    private Double assetVolume;
 }

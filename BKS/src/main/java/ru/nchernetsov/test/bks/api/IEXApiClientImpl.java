@@ -7,11 +7,12 @@ import org.springframework.web.util.UriBuilder;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
-import ru.nchernetsov.test.bks.domain.StockInfo;
+import ru.nchernetsov.test.bks.domain.StockPacket;
+import ru.nchernetsov.test.bks.domain.StockPacketExt;
 
 import java.net.URI;
 import java.util.Comparator;
-import java.util.Set;
+import java.util.List;
 import java.util.function.Function;
 
 @Slf4j
@@ -24,40 +25,45 @@ public class IEXApiClientImpl implements ApiClient {
     private static final WebClient client = WebClient.builder().baseUrl(BASE_URL).build();
 
     @Override
-    public Flux<StockInfo> getStocksInfo(Set<String> stocks) {
+    public Flux<StockPacketExt> getStocksInfo(List<StockPacket> stocks) {
         return Flux.fromIterable(stocks)
                 .parallel()
                 .runOn(Schedulers.elastic())
                 .flatMap(this::getStockInfo)
-                .ordered(Comparator.comparing(StockInfo::getSymbol));
+                .ordered(Comparator.comparing(StockPacketExt::getSymbol));
     }
 
-    private Mono<StockInfo> getStockInfo(String stock) {
-        Mono<IEXStockInfo> iexStockInfo = getIEXStockInfo(stock);
-        Mono<IEXCompanyInfo> iexCompanyInfo = getIEXCompanyInfo(stock);
-        return iexStockInfo.zipWith(iexCompanyInfo, this::fromApiStockAndCompany);
+    // Обогащаем пакет акций данными из внешгео API
+    private Mono<StockPacketExt> getStockInfo(final StockPacket stockPacket) {
+        String symbol = stockPacket.getSymbol();
+        Mono<IEXStockInfo> iexStockInfo = getIEXStockInfo(symbol);
+        Mono<IEXCompanyInfo> iexCompanyInfo = getIEXCompanyInfo(symbol);
+        return iexStockInfo.zipWith(iexCompanyInfo, (iexStockInfo1, iexCompanyInfo1) ->
+                createStockPacketExt(stockPacket, iexStockInfo1, iexCompanyInfo1));
     }
 
-    private Mono<IEXStockInfo> getIEXStockInfo(String stock) {
+    private Mono<IEXStockInfo> getIEXStockInfo(String symbol) {
         return client.get()
-                .uri(getStockInfoUri(stock))
+                .uri(getStockInfoUri(symbol))
                 .retrieve()
                 .bodyToMono(IEXStockInfo.class);
     }
 
-    private Mono<IEXCompanyInfo> getIEXCompanyInfo(String stock) {
+    private Mono<IEXCompanyInfo> getIEXCompanyInfo(String symbol) {
         return client.get()
-                .uri(getCompanyInfoUri(stock))
+                .uri(getCompanyInfoUri(symbol))
                 .retrieve()
                 .bodyToMono(IEXCompanyInfo.class);
     }
 
-    private StockInfo fromApiStockAndCompany(IEXStockInfo stock, IEXCompanyInfo company) {
-        StockInfo stockInfo = new StockInfo();
-        stockInfo.setSymbol(stock.getSymbol());
-        stockInfo.setLatestPrice(stock.getLatestPrice());
-        stockInfo.setSector(company.getSector());
-        return stockInfo;
+    private StockPacketExt createStockPacketExt(StockPacket stockPacket, IEXStockInfo stock, IEXCompanyInfo company) {
+        StockPacketExt stockPacketExt = new StockPacketExt();
+        stockPacketExt.setStockPacket(stockPacket);
+        stockPacketExt.setSymbol(stock.getSymbol());
+        stockPacketExt.setLatestPrice(stock.getLatestPrice());
+        stockPacketExt.setSector(company.getSector());
+        stockPacketExt.setAssetVolume(stockPacket.getVolume() * stock.getLatestPrice());
+        return stockPacketExt;
     }
 
     private Function<UriBuilder, URI> getStockInfoUri(String stock) {

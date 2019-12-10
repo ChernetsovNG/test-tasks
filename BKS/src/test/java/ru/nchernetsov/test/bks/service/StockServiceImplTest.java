@@ -10,12 +10,11 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ru.nchernetsov.test.bks.api.ApiClient;
 import ru.nchernetsov.test.bks.domain.StockAllocation;
-import ru.nchernetsov.test.bks.domain.StockInfo;
 import ru.nchernetsov.test.bks.domain.StockPacket;
+import ru.nchernetsov.test.bks.domain.StockPacketExt;
 import ru.nchernetsov.test.bks.domain.StocksAllocations;
 
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -31,14 +30,21 @@ class StockServiceImplTest {
 
     @BeforeEach
     public void setUp() {
-        given(apiClient.getStocksInfo(new HashSet<>(Arrays.asList(
-                "AAPL", "HOG", "MDSO", "IDRA", "MRSN")))).willReturn(
+        StockPacket stockPacket1 = new StockPacket("AAPL", 50);
+        StockPacket stockPacket2 = new StockPacket("HOG", 10);
+        StockPacket stockPacket3 = new StockPacket("MDSO", 1);
+        StockPacket stockPacket4 = new StockPacket("IDRA", 1);
+        StockPacket stockPacket5 = new StockPacket("MRSN", 1);
+
+        List<StockPacket> stockPackets = Arrays.asList(stockPacket1, stockPacket2, stockPacket3, stockPacket4, stockPacket5);
+
+        given(apiClient.getStocksInfo(stockPackets)).willReturn(
                 Flux.fromIterable(Arrays.asList(
-                        new StockInfo("AAPL", 265.49, "Electronic Technology"),
-                        new StockInfo("HOG", 37.025, "Consumer Durables"),
-                        new StockInfo("MDSO", 92.22, "Technology Services"),
-                        new StockInfo("IDRA", 1.81, "Health Technology"),
-                        new StockInfo("MRSN", 4.29, "Health Technology"))));
+                        new StockPacketExt(stockPacket1, "AAPL", 265.49, "Electronic Technology", 50 * 265.49),
+                        new StockPacketExt(stockPacket2, "HOG", 37.025, "Consumer Durables", 10 * 37.025),
+                        new StockPacketExt(stockPacket3, "MDSO", 92.22, "Technology Services", 1 * 92.22),
+                        new StockPacketExt(stockPacket4, "IDRA", 1.81, "Health Technology", 1 * 1.81),
+                        new StockPacketExt(stockPacket5, "MRSN", 4.29, "Health Technology", 1 * 4.29))));
 
         stockService = new StockServiceImpl(apiClient);
     }
@@ -62,9 +68,21 @@ class StockServiceImplTest {
         List<StockAllocation> allocations = stocksAllocations.getAllocations();
         assertThat(allocations).isNotNull();
         assertThat(allocations).hasSize(4);
-        assertThat(allocations.get(0)).isEqualTo(new StockAllocation("Consumer Durables", 10 * 37.025, 10 * 37.025 / sumValue));
-        assertThat(allocations.get(1)).isEqualTo(new StockAllocation("Electronic Technology", 50 * 265.49, 50 * 265.49 / sumValue));
-        assertThat(allocations.get(2)).isEqualTo(new StockAllocation("Health Technology", 1 * 1.81 + 1 * 4.29, (1 * 1.81 + 1 * 4.29) / sumValue));
-        assertThat(allocations.get(3)).isEqualTo(new StockAllocation("Technology Services", 1 * 92.22, 1 * 92.22 / sumValue));
+
+        assertThat(allocations.get(0).getSector()).isEqualTo("Consumer Durables");
+        assertThat(allocations.get(0).getAssetValue()).isEqualTo(10 * 37.025, Offset.offset(1e-6));
+        assertThat(allocations.get(0).getProportion()).isEqualTo(10 * 37.025 / sumValue, Offset.offset(1e-6));
+
+        assertThat(allocations.get(1).getSector()).isEqualTo("Electronic Technology");
+        assertThat(allocations.get(1).getAssetValue()).isEqualTo(50 * 265.49, Offset.offset(1e-6));
+        assertThat(allocations.get(1).getProportion()).isEqualTo(50 * 265.49 / sumValue, Offset.offset(1e-6));
+
+        assertThat(allocations.get(2).getSector()).isEqualTo("Health Technology");
+        assertThat(allocations.get(2).getAssetValue()).isEqualTo(1 * 1.81 + 1 * 4.29, Offset.offset(1e-6));
+        assertThat(allocations.get(2).getProportion()).isEqualTo((1 * 1.81 + 1 * 4.29) / sumValue, Offset.offset(1e-6));
+
+        assertThat(allocations.get(3).getSector()).isEqualTo("Technology Services");
+        assertThat(allocations.get(3).getAssetValue()).isEqualTo(1 * 92.22, Offset.offset(1e-6));
+        assertThat(allocations.get(3).getProportion()).isEqualTo(1 * 92.22 / sumValue, Offset.offset(1e-6));
     }
 }
