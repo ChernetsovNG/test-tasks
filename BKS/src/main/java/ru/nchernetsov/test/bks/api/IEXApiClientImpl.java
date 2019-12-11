@@ -36,7 +36,7 @@ public class IEXApiClientImpl implements ApiClient {
                 .ordered(Comparator.comparing(StockPacketExt::getSymbol));
     }
 
-    // Обогащаем пакет акций данными из внешгео API
+    // Обогащаем пакет акций данными из внешнего API
     private Mono<StockPacketExt> getStockInfo(final StockPacket stockPacket) {
         String symbol = stockPacket.getSymbol();
         Mono<IEXStockInfo> iexStockInfo = getIEXStockInfo(symbol);
