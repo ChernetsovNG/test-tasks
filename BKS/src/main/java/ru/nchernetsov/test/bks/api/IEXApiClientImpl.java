@@ -22,10 +22,13 @@ public class IEXApiClientImpl implements ApiClient {
     private static final String BASE_URL = "https://cloud.iexapis.com/stable/stock/";
     private static final String TOKEN = "pk_7a90786dc5b54cf491dd7c55c6da2522";
 
-    private static final WebClient client = WebClient.builder().baseUrl(BASE_URL).build();
+    private static final WebClient CLIENT = WebClient.builder().baseUrl(BASE_URL).build();
 
     @Override
     public Flux<StockPacketExt> getStocksInfo(List<StockPacket> stocks) {
+        if (stocks == null || stocks.isEmpty()) {
+            return Flux.empty();
+        }
         return Flux.fromIterable(stocks)
                 .parallel()
                 .runOn(Schedulers.elastic())
@@ -43,14 +46,14 @@ public class IEXApiClientImpl implements ApiClient {
     }
 
     private Mono<IEXStockInfo> getIEXStockInfo(String symbol) {
-        return client.get()
+        return CLIENT.get()
                 .uri(getStockInfoUri(symbol))
                 .retrieve()
                 .bodyToMono(IEXStockInfo.class);
     }
 
     private Mono<IEXCompanyInfo> getIEXCompanyInfo(String symbol) {
-        return client.get()
+        return CLIENT.get()
                 .uri(getCompanyInfoUri(symbol))
                 .retrieve()
                 .bodyToMono(IEXCompanyInfo.class);

@@ -16,6 +16,4 @@ public interface StockService {
      * @param stocks набор акций
      */
     Mono<StocksAllocations> calculateStocksAllocations(List<StockPacket> stocks);
-
-    Flux<StockPacketExt> getStocksInfo(List<StockPacket> stocks);
 }

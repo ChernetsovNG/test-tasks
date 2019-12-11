@@ -25,65 +25,63 @@ public class StockServiceImpl implements StockService {
     @Override
     public Mono<StocksAllocations> calculateStocksAllocations(List<StockPacket> stocks) {
         // 1. Получаем данные из внешнего API
-        Flux<StockPacketExt> stockPacketsExt = getStocksInfo(stocks);
-
-        // 2. Группируем по сектору и считаем сумму assetValue в каждом секторе
-        Flux<List<StockPacketExt>> stockPacketsExtGroupBySector = stockPacketsExt
-                .groupBy(StockPacketExt::getSector)
-                .flatMap(Flux::collectList);
-
-        Mono<List<StocksGroupBySector>> stocksGroupBySectors = stockPacketsExtGroupBySector
-                .map(stockPacketsExtBySector -> {
-                    double sumAsset = stockPacketsExtBySector.stream()
-                            .mapToDouble(StockPacketExt::getAssetVolume)
-                            .sum();
-                    StocksGroupBySector stocksGroupBySector = new StocksGroupBySector();
-                    stocksGroupBySector.setSector(stockPacketsExtBySector.get(0).getSector());
-                    stocksGroupBySector.setSectorStocks(stockPacketsExtBySector);
-                    stocksGroupBySector.setSumAsset(sumAsset);
-                    return stocksGroupBySector;
-                })
-                .collectList();
-
-        // 3. Рассчитываем общую стоимость портфеля акций
-        Mono<ValueAndStocksGroupBySector> valueAndStocksGroupBySectorMono = stocksGroupBySectors
-                .map(stocksGroupBySectorsList -> {
-                    double value = stocksGroupBySectorsList.stream()
-                            .mapToDouble(StocksGroupBySector::getSumAsset)
-                            .sum();
-                    ValueAndStocksGroupBySector valueAndStocksGroupBySector = new ValueAndStocksGroupBySector();
-                    valueAndStocksGroupBySector.setStocksGroupBySectors(stocksGroupBySectorsList);
-                    valueAndStocksGroupBySector.setValue(value);
-                    return valueAndStocksGroupBySector;
-                });
-
-        // 4. Рассчитываем доли и формируем окончательный результат
-        return valueAndStocksGroupBySectorMono
-                .map(valueAndStocksGroupBySector -> {
-                    List<StocksGroupBySector> stocksGroupBySectorsList = valueAndStocksGroupBySector.getStocksGroupBySectors();
-                    Double value = valueAndStocksGroupBySector.getValue();
-                    List<StockAllocation> stockAllocations = stocksGroupBySectorsList.stream()
-                            .map(stocksGroupBySector -> {
-                                String sector = stocksGroupBySector.getSector();
-                                Double sumAsset = stocksGroupBySector.getSumAsset();
-                                Double proportion = sumAsset / value;
-                                StockAllocation stockAllocation = new StockAllocation();
-                                stockAllocation.setSector(sector);
-                                stockAllocation.setAssetValue(sumAsset);
-                                stockAllocation.setProportion(proportion);
-                                return stockAllocation;
-                            })
-                            .sorted(Comparator.comparing(StockAllocation::getSector))
-                            .collect(Collectors.toList());
-                    StocksAllocations stocksAllocations = new StocksAllocations();
-                    stocksAllocations.setValue(value);
-                    stocksAllocations.setAllocations(stockAllocations);
-                    return stocksAllocations;
-                });
+        return getStocksInfo(stocks)
+                // 2. Группируем пакеты акций по сектору
+                .groupBy(StockPacketExt::getSector).flatMap(Flux::collectList)
+                // 3. Считаем сумму assetValue в каждом секторе
+                .map(this::getStocksGroupBySector).collectList()
+                // 4. Рассчитываем общую стоимость портфеля акций
+                .map(this::getValueAndStocksGroupBySector)
+                // 5. Рассчитываем доли и формируем окончательный результат
+                .map(this::getStocksAllocations);
     }
 
-    @Override
-    public Flux<StockPacketExt> getStocksInfo(List<StockPacket> stocks) {
+    private Flux<StockPacketExt> getStocksInfo(List<StockPacket> stocks) {
         return apiClient.getStocksInfo(stocks);
+    }
+
+    private StocksGroupBySector getStocksGroupBySector(List<StockPacketExt> stockPacketsExtBySector) {
+        double sumAsset = stockPacketsExtBySector.stream()
+                .mapToDouble(StockPacketExt::getAssetVolume)
+                .sum();
+        StocksGroupBySector stocksGroupBySector = new StocksGroupBySector();
+        stocksGroupBySector.setSector(stockPacketsExtBySector.get(0).getSector());
+        stocksGroupBySector.setSectorStocks(stockPacketsExtBySector);
+        stocksGroupBySector.setSumAsset(sumAsset);
+        return stocksGroupBySector;
+    }
+
+    private ValueAndStocksGroupBySector getValueAndStocksGroupBySector(List<StocksGroupBySector> stocksGroupBySectorsList) {
+        double value = stocksGroupBySectorsList.stream()
+                .mapToDouble(StocksGroupBySector::getSumAsset)
+                .sum();
+        ValueAndStocksGroupBySector valueAndStocksGroupBySector = new ValueAndStocksGroupBySector();
+        valueAndStocksGroupBySector.setStocksGroupBySectors(stocksGroupBySectorsList);
+        valueAndStocksGroupBySector.setValue(value);
+        return valueAndStocksGroupBySector;
+    }
+
+    private StocksAllocations getStocksAllocations(ValueAndStocksGroupBySector valueAndStocksGroupBySector) {
+        List<StocksGroupBySector> stocksGroupBySectorsList = valueAndStocksGroupBySector.getStocksGroupBySectors();
+        Double value = valueAndStocksGroupBySector.getValue();
+        List<StockAllocation> stockAllocations = stocksGroupBySectorsList.stream()
+                .map(stocksGroupBySector -> getStockAllocation(value, stocksGroupBySector))
+                .sorted(Comparator.comparing(StockAllocation::getSector))
+                .collect(Collectors.toList());
+        StocksAllocations stocksAllocations = new StocksAllocations();
+        stocksAllocations.setValue(value);
+        stocksAllocations.setAllocations(stockAllocations);
+        return stocksAllocations;
+    }
+
+    private StockAllocation getStockAllocation(Double value, StocksGroupBySector stocksGroupBySector) {
+        String sector = stocksGroupBySector.getSector();
+        Double sumAsset = stocksGroupBySector.getSumAsset();
+        Double proportion = sumAsset / value;
+        StockAllocation stockAllocation = new StockAllocation();
+        stockAllocation.setSector(sector);
+        stockAllocation.setAssetValue(sumAsset);
+        stockAllocation.setProportion(proportion);
+        return stockAllocation;
     }
 }
