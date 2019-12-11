@@ -41,8 +41,8 @@ public class IEXApiClientImpl implements ApiClient {
         String symbol = stockPacket.getSymbol();
         Mono<IEXStockInfo> iexStockInfo = getIEXStockInfo(symbol);
         Mono<IEXCompanyInfo> iexCompanyInfo = getIEXCompanyInfo(symbol);
-        return iexStockInfo.zipWith(iexCompanyInfo, (iexStockInfo1, iexCompanyInfo1) ->
-                createStockPacketExt(stockPacket, iexStockInfo1, iexCompanyInfo1));
+        return iexStockInfo.zipWith(iexCompanyInfo, (stock, company) ->
+                createStockPacketExt(stockPacket, stock, company));
     }
 
     private Mono<IEXStockInfo> getIEXStockInfo(String symbol) {
