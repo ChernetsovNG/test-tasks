@@ -4,6 +4,7 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ru.nchernetsov.test.bks.api.ApiClient;
+import ru.nchernetsov.test.bks.api.StockPacketExtError;
 import ru.nchernetsov.test.bks.domain.StockAllocation;
 import ru.nchernetsov.test.bks.domain.StockPacket;
 import ru.nchernetsov.test.bks.domain.StockPacketExt;
@@ -28,13 +29,15 @@ public class StockServiceImpl implements StockService {
         validateInput(stocks);
         // 1. Получаем данные из внешнего API
         return getStocksInfo(stocks)
-                // 2. Группируем пакеты акций по сектору
+                // 2. Фильтруем те, где былы ошибки
+                .filter(stockPacketExt -> !(stockPacketExt instanceof StockPacketExtError))
+                // 3. Группируем пакеты акций по сектору
                 .groupBy(StockPacketExt::getSector).flatMap(Flux::collectList)
-                // 3. Считаем сумму assetValue в каждом секторе
+                // 4. Считаем сумму assetValue в каждом секторе
                 .map(this::getStocksGroupBySector).collectList()
-                // 4. Рассчитываем общую стоимость портфеля акций
+                // 5. Рассчитываем общую стоимость портфеля акций
                 .map(this::getValueAndStocksGroupBySector)
-                // 5. Рассчитываем доли и формируем окончательный результат
+                // 6. Рассчитываем доли и формируем окончательный результат
                 .map(this::getStocksAllocations);
     }
 

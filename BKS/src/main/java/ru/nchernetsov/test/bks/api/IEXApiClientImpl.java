@@ -24,6 +24,8 @@ public class IEXApiClientImpl implements ApiClient {
 
     private static final WebClient CLIENT = WebClient.builder().baseUrl(BASE_URL).build();
 
+    private static final String ERROR_SYMBOL = "ERROR";
+
     @Override
     public Flux<StockPacketExt> getStocksInfo(List<StockPacket> stocks) {
         if (stocks == null || stocks.isEmpty()) {
@@ -33,7 +35,7 @@ public class IEXApiClientImpl implements ApiClient {
                 .parallel()
                 .runOn(Schedulers.elastic())
                 .flatMap(this::getStockInfo)
-                .ordered(Comparator.comparing(StockPacketExt::getSymbol));
+                .ordered(Comparator.comparing(StockPacketExt::getSymbol, Comparator.nullsFirst(Comparator.naturalOrder())));
     }
 
     // Обогащаем пакет акций данными из внешнего API
@@ -49,17 +51,22 @@ public class IEXApiClientImpl implements ApiClient {
         return CLIENT.get()
                 .uri(getStockInfoUri(symbol))
                 .retrieve()
-                .bodyToMono(IEXStockInfo.class);
+                .bodyToMono(IEXStockInfo.class)
+                .onErrorReturn(new IEXStockInfo(ERROR_SYMBOL, null));
     }
 
     private Mono<IEXCompanyInfo> getIEXCompanyInfo(String symbol) {
         return CLIENT.get()
                 .uri(getCompanyInfoUri(symbol))
                 .retrieve()
-                .bodyToMono(IEXCompanyInfo.class);
+                .bodyToMono(IEXCompanyInfo.class)
+                .onErrorReturn(new IEXCompanyInfo(ERROR_SYMBOL, null, null));
     }
 
     private StockPacketExt createStockPacketExt(StockPacket stockPacket, IEXStockInfo stock, IEXCompanyInfo company) {
+        if (ERROR_SYMBOL.equals(stock.getSymbol())) {
+            return new StockPacketExtError();
+        }
         StockPacketExt stockPacketExt = new StockPacketExt();
         stockPacketExt.setStockPacket(stockPacket);
         stockPacketExt.setSymbol(stock.getSymbol());
