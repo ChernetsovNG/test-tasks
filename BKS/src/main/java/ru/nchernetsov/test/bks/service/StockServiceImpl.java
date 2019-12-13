@@ -29,7 +29,7 @@ public class StockServiceImpl implements StockService {
         validateInput(stocks);
         // 1. Получаем данные из внешнего API
         return getStocksInfo(stocks)
-                // 2. Фильтруем те, где былы ошибки
+                // 2. Фильтруем те запросы, где от внешнего API были ошибки
                 .filter(stockPacketExt -> !(stockPacketExt instanceof StockPacketExtError))
                 // 3. Группируем пакеты акций по сектору
                 .groupBy(StockPacketExt::getSector).flatMap(Flux::collectList)
