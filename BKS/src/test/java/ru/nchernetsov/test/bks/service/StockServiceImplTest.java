@@ -18,6 +18,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.BDDMockito.given;
 
 @ExtendWith(MockitoExtension.class)
@@ -30,6 +31,49 @@ class StockServiceImplTest {
 
     @BeforeEach
     public void setUp() {
+        stockService = new StockServiceImpl(apiClient);
+    }
+
+    @Test
+    void wrongInputNullStocksListShouldThrowIllegalArgumentException() {
+        List<StockPacket> stocks = null;
+        assertThrows(IllegalArgumentException.class, () -> stockService.calculateStocksAllocations(stocks));
+    }
+
+    @Test
+    void wrongInputNullSymbolShouldThrowIllegalArgumentException() {
+        List<StockPacket> stocks = Arrays.asList(
+                new StockPacket(null, 1),
+                new StockPacket("AAPL", 50));
+        assertThrows(IllegalArgumentException.class, () -> stockService.calculateStocksAllocations(stocks));
+    }
+
+    @Test
+    void wrongInputEmptySymbolShouldThrowIllegalArgumentException() {
+        List<StockPacket> stocks = Arrays.asList(
+                new StockPacket("", 1),
+                new StockPacket("AAPL", 50));
+        assertThrows(IllegalArgumentException.class, () -> stockService.calculateStocksAllocations(stocks));
+    }
+
+    @Test
+    void wrongInputNullVolumeShouldThrowIllegalArgumentException() {
+        List<StockPacket> stocks = Arrays.asList(
+                new StockPacket("HOG", null),
+                new StockPacket("AAPL", 50));
+        assertThrows(IllegalArgumentException.class, () -> stockService.calculateStocksAllocations(stocks));
+    }
+
+    @Test
+    void wrongInputNegativeVolumeShouldThrowIllegalArgumentException() {
+        List<StockPacket> stocks = Arrays.asList(
+                new StockPacket("HOG", -10),
+                new StockPacket("AAPL", 50));
+        assertThrows(IllegalArgumentException.class, () -> stockService.calculateStocksAllocations(stocks));
+    }
+
+    @Test
+    void calculateStocksAllocations() {
         StockPacket stockPacket1 = new StockPacket("AAPL", 50);
         StockPacket stockPacket2 = new StockPacket("HOG", 10);
         StockPacket stockPacket3 = new StockPacket("MDSO", 1);
@@ -46,11 +90,6 @@ class StockServiceImplTest {
                         new StockPacketExt(stockPacket4, "IDRA", 1.81, "Health Technology", 1 * 1.81),
                         new StockPacketExt(stockPacket5, "MRSN", 4.29, "Health Technology", 1 * 4.29))));
 
-        stockService = new StockServiceImpl(apiClient);
-    }
-
-    @Test
-    void calculateStocksAllocations() {
         List<StockPacket> stocks = Arrays.asList(
                 new StockPacket("AAPL", 50),
                 new StockPacket("HOG", 10),

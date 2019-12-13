@@ -9,6 +9,7 @@ import ru.nchernetsov.test.bks.domain.StockPacket;
 import ru.nchernetsov.test.bks.domain.StockPacketExt;
 import ru.nchernetsov.test.bks.domain.StocksAllocations;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -24,6 +25,7 @@ public class StockServiceImpl implements StockService {
 
     @Override
     public Mono<StocksAllocations> calculateStocksAllocations(List<StockPacket> stocks) {
+        validateInput(stocks);
         // 1. Получаем данные из внешнего API
         return getStocksInfo(stocks)
                 // 2. Группируем пакеты акций по сектору
@@ -34,6 +36,25 @@ public class StockServiceImpl implements StockService {
                 .map(this::getValueAndStocksGroupBySector)
                 // 5. Рассчитываем доли и формируем окончательный результат
                 .map(this::getStocksAllocations);
+    }
+
+    private void validateInput(List<StockPacket> stocks) {
+        if (stocks == null) {
+            throw new IllegalArgumentException("field \"stocks\" is null");
+        }
+        List<StockPacket> wrongPackets = new ArrayList<>();
+        for (StockPacket stock : stocks) {
+            String symbol = stock.getSymbol();
+            Integer volume = stock.getVolume();
+            if (symbol == null || symbol.isEmpty()) {
+                wrongPackets.add(stock);
+            } else if (volume == null || volume < 0) {
+                wrongPackets.add(stock);
+            }
+        }
+        if (!wrongPackets.isEmpty()) {
+            throw new IllegalArgumentException("There are some wrong input data = " + wrongPackets);
+        }
     }
 
     private Flux<StockPacketExt> getStocksInfo(List<StockPacket> stocks) {

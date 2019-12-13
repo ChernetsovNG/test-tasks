@@ -3,6 +3,7 @@ package ru.nchernetsov.test.bks.web;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -25,5 +26,10 @@ public class StockController {
     public ResponseEntity<Mono<StocksAllocations>> calcStocksAllocations(@RequestBody Stocks stocks) {
         log.debug("Invoke /stocks/allocations: stocks = {}", stocks);
         return ResponseEntity.ok(stockService.calculateStocksAllocations(stocks.getStocks()));
+    }
+
+    @ExceptionHandler
+    public ResponseEntity<?> illegalArgumentException(IllegalArgumentException ex) {
+        return ResponseEntity.badRequest().body(ex.getMessage());
     }
 }
