@@ -30,7 +30,7 @@ public class StockServiceImpl implements StockService {
         // 1. Получаем данные из внешнего API
         return getStocksInfo(stocks)
                 // 2. Фильтруем те запросы, где от внешнего API были ошибки
-                .filter(stockPacketExt -> !(stockPacketExt instanceof StockPacketExtError))
+                .filter(this::isPacketWithoutAPIErrors)
                 // 3. Группируем пакеты акций по сектору
                 .groupBy(StockPacketExt::getSector).flatMap(Flux::collectList)
                 // 4. Считаем сумму assetValue в каждом секторе
@@ -39,25 +39,6 @@ public class StockServiceImpl implements StockService {
                 .map(this::getValueAndStocksGroupBySector)
                 // 6. Рассчитываем доли и формируем окончательный результат
                 .map(this::getStocksAllocations);
-    }
-
-    private void validateInput(List<StockPacket> stocks) {
-        if (stocks == null) {
-            throw new IllegalArgumentException("field \"stocks\" is null");
-        }
-        List<StockPacket> wrongPackets = new ArrayList<>();
-        for (StockPacket stock : stocks) {
-            String symbol = stock.getSymbol();
-            Integer volume = stock.getVolume();
-            if (symbol == null || symbol.isEmpty()) {
-                wrongPackets.add(stock);
-            } else if (volume == null || volume < 0) {
-                wrongPackets.add(stock);
-            }
-        }
-        if (!wrongPackets.isEmpty()) {
-            throw new IllegalArgumentException("There are some wrong input data = " + wrongPackets);
-        }
     }
 
     private Flux<StockPacketExt> getStocksInfo(List<StockPacket> stocks) {
@@ -107,5 +88,28 @@ public class StockServiceImpl implements StockService {
         stockAllocation.setAssetValue(sumAsset);
         stockAllocation.setProportion(proportion);
         return stockAllocation;
+    }
+
+    private void validateInput(List<StockPacket> stocks) {
+        if (stocks == null) {
+            throw new IllegalArgumentException("field \"stocks\" is null");
+        }
+        List<StockPacket> wrongPackets = new ArrayList<>();
+        for (StockPacket stock : stocks) {
+            String symbol = stock.getSymbol();
+            Integer volume = stock.getVolume();
+            if (symbol == null || symbol.isEmpty()) {
+                wrongPackets.add(stock);
+            } else if (volume == null || volume < 0) {
+                wrongPackets.add(stock);
+            }
+        }
+        if (!wrongPackets.isEmpty()) {
+            throw new IllegalArgumentException("There are some wrong input data = " + wrongPackets);
+        }
+    }
+
+    private boolean isPacketWithoutAPIErrors(StockPacketExt stockPacket) {
+        return !(stockPacket instanceof StockPacketExtError);
     }
 }
